@@ -19,29 +19,31 @@
 %  4)  latex apssamp.tex
 %
 \documentclass[%
- reprint,
  superscriptaddress,
-%groupedaddress,
-%unsortedaddress,
-%runinaddress,
-%frontmatterverbose, 
-%preprint,
-%preprintnumbers,
-%nofootinbib,
-%nobibnotes,
-%bibnotes,
- amsmath,amssymb,
- aps, prl, twocolumn, showpacs,
+ aps,prl,
+ reprint,
+ twocolumn,
+ amsmath,amssymb,showpacs,
+ bibnotes,
 %pra,
 %prb,
 %rmp,
 %prstab,
 %prstper,
 %floatfix,
+% groupedaddress,
+% unsortedaddress,
+% runinaddress,
+% frontmatterverbose, 
+% preprint,
+% preprintnumbers,
+% nofootinbib,
+% nobibnotes,
 ]{revtex4-2}
+\usepackage{lmodern}
 
 \usepackage{graphicx}% Include figure files
-\usepackage{subcaption}
+% \usepackage{subcaption}
 \usepackage{dcolumn}% Align table columns on decimal point
 \usepackage{bm}% bold math
 %\usepackage{hyperref}% add hypertext capabilities
@@ -55,12 +57,20 @@
 %%total={6.5in,8.75in}, top=1.2in, left=0.9in, includefoot,
 %%height=10in,a5paper,hmargin={3cm,0.8in},
 %]{geometry}
-\usepackage[justification=raggedright,singlelinecheck=false]{caption}
+% \usepackage[justification=raggedright,singlelinecheck=false]{caption}
 \usepackage{amsthm}
 \usepackage{multirow}
 \usepackage{array}
 \usepackage{booktabs}
-\usepackage{svg}
+% \usepackage{svg}
+\usepackage{newtxtext,newtxmath}
+% \usepackage{physics}
+% \usepackage{microtype}
+% \usepackage{dsfont}
+% \usepackage{xcolor}
+% \usepackage{siunitx}
+
+
 \newtheorem{theorem}{Theorem}
 \newtheorem{corollary}{Corollary}[theorem]
 \newtheorem{lemma}{Lemma}
@@ -74,6 +84,15 @@
 \newcommand*{\dif}{\mathop{}\!\mathrm{d}}
 \DeclareMathOperator*{\argmax}{argmax}
 
+\definecolor{urlc}{RGB}{58,105,157}
+\setlength{\parskip}{0pt}
+\usepackage[
+colorlinks=true,
+urlcolor=urlc,
+linkcolor=urlc,
+citecolor=urlc
+]{hyperref}
+
 \begin{document}
 
 \preprint{APS/123-QED}
@@ -82,8 +101,42 @@
 \title{Beyond Unitary Designs: Quantifying Trainability in Parameterized Quantum Circuits}
 % \thanks{A footnote to the article title}%
 
-\author{Jinhong Zeng, Zhenyue Du, Zhaokai Li}
-% \altaffiliation[Also at ]{Physics Department, University of Science and Technology of China.}
+\author{Jinhong Zeng}
+\thanks{These authors contribute equally}
+\affiliation{
+Laboratory of Spin Magnetic Resonance, School of Physical Sciences, Anhui Province Key Laboratory of Scientific Instrument Development and Application, University of Science and Technology of China, Hefei 230026, China}
+
+\author{Zhenyue Du}
+\thanks{These authors contribute equally}
+\affiliation{
+Laboratory of Spin Magnetic Resonance, School of Physical Sciences, Anhui Province Key Laboratory of Scientific Instrument Development and Application, University of Science and Technology of China, Hefei 230026, China}
+
+\author{Penghui Yao}
+
+
+\author{Jun Li}
+\email{lijunquantum@szu.edu.cn}
+\affiliation{Institute of Quantum Precision Measurement, State Key Laboratory of Radio Frequency Heterogeneous Integration, College of Physics and Optoelectronic Engineering, Shenzhen University, Shenzhen 518060, China}
+\affiliation{Quantum Science Center of Guangdong-Hong Kong-Macao Greater Bay Area (Guangdong), Shenzhen 518045, China}
+
+\author{Zhaokai Li}
+\email{zkli@ustc.edu.cn}
+\affiliation{
+Laboratory of Spin Magnetic Resonance, School of Physical Sciences, Anhui Province Key Laboratory of Scientific Instrument Development and Application, University of Science and Technology of China, Hefei 230026, China}
+\affiliation{
+Hefei National Research Center for Physical Sciences at the Microscale, University of Science and Technology of China, Hefei 230026, China}
+\affiliation{
+Hefei National Laboratory, University of Science and Technology of China, Hefei 230088, China}
+
+\author{Xinhua Peng}
+\email{xhpeng@ustc.edu.cn}
+\affiliation{
+Laboratory of Spin Magnetic Resonance, School of Physical Sciences, Anhui Province Key Laboratory of Scientific Instrument Development and Application, University of Science and Technology of China, Hefei 230026, China}
+\affiliation{
+Hefei National Research Center for Physical Sciences at the Microscale, University of Science and Technology of China, Hefei 230026, China}
+\affiliation{
+Hefei National Laboratory, University of Science and Technology of China, Hefei 230088, China}
+
 % Lines break automatically or can be forced with \\
 % \author{Second Author}%
 % \email{Second.Author@institution.edu}
@@ -139,47 +192,80 @@ In this Letter, we develop a measure-based framework to characterize the trainab
                               %display desired
 \maketitle
 
+\emph{Introduction}.
+Quantum technology has gradually come to play an indispensable role in a wide range of practical applications~\cite{daley2022practical, huang2022quantum, bravyi2018quantum, lee2023evaluating, arvidsson2020quantum}, particularly in frontier fields such as metrology, precision measurement, and quantum machine learning~\cite{liu2024optimal,munoz2024photonic,de2025improving,yang2025programmable,haug2022natural,miao2024neural,tilly2022variational,wu2023quantumdarts}. In the current Noisy Intermediate-Scale Quantum (NISQ) era, hardware imperfections and limited coherence times hinder the execution of complex quantum computation. To achieve quantum advantage under these constraints, Variational Quantum Algorithms (VQAs) have emerged as the dominant paradigm~\cite{peruzzo2014variational,farhi2014quantum,mcclean2016theory,o2016scalable,kandala2017hardware,grimsley2019adaptive,endo2020variational,cimini2024variational}. VQAs constitute a hybrid quantum-classical framework that solves complex problems by optimizing trainable PQCs via classical algorithms (e.g., gradient descent~\cite{mitarai2018quantum,schuld2019evaluating}). Therefore, the successful execution of VQAs is highly dependent on the trainability of the chosen PQC. The trainability of a PQC is typically directly governed by the gradient variance of the cost function. When the gradient variance of the cost function vanishes exponentially with the system size, the average gradient concentrates around zero. This means that large-scale circuits with this property often require an exponentially large number of measurements to converge, leading to severe trainability issues. This phenomenon, known as the barren plateau~\cite{mcclean2018barren}, constitutes a central obstacle to achieving quantum advantage in the NISQ era.
+
+To investigate the factors influencing the trainability of PQCs, the unitary 2-design framework is commonly used to analyze the gradient variance of a given PQC at a specific parameter~\cite{ortiz2021entanglement, holmes2022connecting, gong2024enhancing, arrasmith2021effect, qi2023barren, liu2022estimating,cunningham2025investigating}. The unitary 2-design framework is essentially a simulation of the Haar random distribution, relying on the assumption that the analyzed PQC can approximate the uniform Haar measure to some extent. However, PQCs that approximate the Haar measure exhibit strong randomness~\cite{holmes2022connecting}, which results in poor trainability and a lack of practical utility.
+
+In practice, quantum circuits are typically designed with tailored structures for specific problems, which inevitably leads to a lack of randomness. Common examples include shallow or locality-constrained hardware-efficient ansatzes~\cite{watanabe2023optimizing}, circuits generated by continuous-time evolution under structured Hamiltonians~\cite{park2024hamiltonian}, and symmetry-constrained structures~\cite{lee2018generalized}. Such non-random PQCs may exhibit strong trainability and play an important role in practical applications. However, existing unitary 2-design frameworks are inherently tied to the strong randomness assumption; they are effectively restricted to analyzing untrainable circuits, leaving these practical, structured (and potentially trainable) circuits outside their scope. Many studies have attempted to extend the current analytical frameworks. For example, Refs. \cite{brandao2016local,cerezo2021cost,pesah2021absence,ragone2024lie} extended the unitary 2-design framework to analyze PQCs composed of multiple unitary 2-design blocks, but each block remains constrained by the strong randomness assumption. The work in Ref.~\cite{anschuetz2024unified} sought to develop a more general analytical approach based on Jordan algebra decomposition. Nevertheless, these frameworks typically rely on prior knowledge of the circuit's underlying mathematical structure, which is often difficult to determine. To systematically analyze the trainability of practical PQCs, it is necessary to propose a more comprehensive gradient variance framework applicable to a broader class of PQCs, and within which the mathematical structure behind a given circuit can be obtained straightforwardly.
+
+In this Letter, we develop a measure-based framework to characterize the trainability of PQCs beyond the standard unitary design paradigm. This framework approximates the distribution of any PQC to arbitrary precision by developing a class of polynomial probability measures, and obtains explicit gradient variance expressions by decomposing this distribution using zonal polynomials and Weingarten calculus. We also establish a level classification for trainability by projecting the gradient variance into different orthogonal subspaces, which reveals the significant advantages of the previously overlooked unitary 1-design in terms of trainability. Furthermore, we introduce the concept of "improvement potential" to quantify the maximal variance enhancement achievable under local perturbations. Our work provides systematic analytical guidance for identifying and enhancing the trainability of parameterized quantum circuits in the NISQ era.
+
+
 %\tableofcontents
 
-% Quantum computation has made remarkable advancements due to significant theoretical and experimental research over the past decades. Many researchers have demonstrated quantum speed-up advantages across various applications~\cite{daley2022practical, huang2022quantum, bravyi2018quantum, lee2023evaluating, arvidsson2020quantum}. Yet, current devices remain in the noisy intermediate-scale quantum (NISQ) regime, constrained by limited qubit counts and imperfect gate fidelities~\cite{preskill2018quantum, lau2022nisq}. Variational quantum algorithms (VQAs) have become a promising method due to their low requirements for qubit counts and gate fidelities. A VQA combines a parameterized quantum circuit (PQC), defining the ansatz and cost function, with a classical optimizer that updates the circuit parameters. However, many PQCs exhibit vanishing gradients exponentially during training~\cite{mcclean2018barren,wang2021noise}, which severely affects the convergence of cost functions. Characterizing the trainability in VQAs, therefore, becomes a central issue.
-After decades of development, quantum technology has demonstrated explicit advantages in areas such as accelerated computing and precision measurement~\cite{daley2022practical, huang2022quantum, bravyi2018quantum, lee2023evaluating, arvidsson2020quantum}. As a trainable framework for realizing such advantages, PQCs have become a widely used architecture for qubit computation and evolution, with notable applications in quantum metrology \cite{liu2024optimal,munoz2024photonic,de2025improving,yang2025programmable} and variational quantum algorithms (VQAs)~\cite{haug2022natural,miao2024neural,tilly2022variational,wu2023quantumdarts}. PQC's ability to solve given problems stems from its tunable internal parameters, which allow us to optimize them within a fixed ansatz to accomplish tasks. In practical applications, such optimization is typically achieved using gradient descent and its variants. However, it has been shown that for a broad class of parametrized quantum circuits, particularly those that are universal, the gradient of the cost function will vanish exponentially with the size of the system\cite{holmes2022connecting,gong2024enhancing}, resulting in severe trainability issues and degraded optimization performance, known as the barren plateau. Therefore, for a given PQC architecture, evaluating the probability of its gradients vanishing exponentially under the current parameter distribution is a crucial topic in the study of circuit trainability.
-% The original progress of the research on the trainability of VQAs comes after the introduction of unitary designs~\cite{gross2007evenly,roy2009unitary}. A unitary $t$-design is a set of unitary matrices that statistically mimics the average ensemble over unitary groups up to the $t$-th moment, which is a suitable object to describe the expectation and variance of gradients of PQCs. The $\gamma$-approximate unitary 2-design exists widely in PQCs with sufficient randomness for $\gamma$ exponentially small~\cite{roy2009unitary}. It is known that a sufficiently random PQC can realize a $\gamma$-approximate unitary 2-design within $\mathcal{O}(n)$ circuit depth ($n$ is the number of qubits)~\cite{dankert2009exact}. Because unitary 2-designs accurately approximate the statistical behavior of large and well-randomized circuits, local structures based on unitary 2-designs~\cite{holmes2022connecting, pesah2021absence, park2024hamiltonian, cerezo2021cost} have become standard assumptions in recent research.
+% % Quantum computation has made remarkable advancements due to significant theoretical and experimental research over the past decades. Many researchers have demonstrated quantum speed-up advantages across various applications~\cite{daley2022practical, huang2022quantum, bravyi2018quantum, lee2023evaluating, arvidsson2020quantum}. Yet, current devices remain in the noisy intermediate-scale quantum (NISQ) regime, constrained by limited qubit counts and imperfect gate fidelities~\cite{preskill2018quantum, lau2022nisq}. Variational quantum algorithms (VQAs) have become a promising method due to their low requirements for qubit counts and gate fidelities. A VQA combines a parameterized quantum circuit (PQC), defining the ansatz and cost function, with a classical optimizer that updates the circuit parameters. However, many PQCs exhibit vanishing gradients exponentially during training~\cite{mcclean2018barren,wang2021noise}, which severely affects the convergence of cost functions. Characterizing the trainability in VQAs, therefore, becomes a central issue.
+% % After decades of development, quantum technologies have become increasingly important in areas such as metrology, precision measurement, and accelerated computing~\cite{daley2022practical, huang2022quantum, bravyi2018quantum, lee2023evaluating, arvidsson2020quantum}, where they offer significant advantages over classical approaches. In these applications, PQCs serve as a central computational paradigm, providing a trainable framework for solving complex tasks. As a trainable framework for realizing such advantages, PQCs have become a widely used architecture for qubit computation and evolution, with notable applications in quantum metrology \cite{liu2024optimal,munoz2024photonic,de2025improving,yang2025programmable} and variational quantum algorithms (VQAs)~\cite{haug2022natural,miao2024neural,tilly2022variational,wu2023quantumdarts}. 
 
- Gradient variance is widely used as a standard indicator of gradient vanishing. By Chebyshev’s inequality, a small gradient variance implies a high probability of vanishing gradients\cite{mcclean2018barren}, which reduces the trainability problem to the evaluation of gradient variances under a specified parameter distribution. Most existing studies evaluate gradient variances under the unitary 2-design assumption\cite{cerezo2021cost,ortiz2021entanglement,fontana2024characterizing,cunningham2025investigating}, where a unitary $t$-design denotes an ensemble of unitary operators whose statistical moments up to order $t$ coincide with those of the Haar random measure. The Haar measure enables a precise evaluation of gradients for circuits that approximate a global unitary 2-design. However, this assumption is only satisfied by PQCs with strong randomness. Such circuits exhibit gradient variances scaling as $d^{-2}$(with Hilbert space dimension $d$), leading to exponentially flat optimization landscapes and poor convergence. For circuits that do not satisfy this assumption, a reliable analytical framework remains lacking.
- Recent research has extended this analytical framework to cover circuits composed of multiple local unitary 2-designs; nevertheless, each local 2-design remains constrained by the strong randomness assumption\cite{pesah2021absence, schumann2024emergence}.
- %Recent research has extended this analytical framework to circuits composed of multiple local unitary 2-designs, yet each local 2-design in this approach remains constrained by strong randomness assumptions.
- %PQCs with strong randomness typically approximate a unitary 2-design, where a unitary $t$-design denotes an ensemble of unitary operators whose statistical moments up to order $t$ coincide with those of complete randomness. Most existing studies evaluate gradient variances under the unitary 2-design assumption. However, such circuits exhibit gradient variances scaling as $d^{-2}$(with Hilbert space dimension $d$), leading to exponentially flat optimization landscapes and poor convergence. Recent work has extended this framework to local unitary 2-designs, enlarging the class of analyzable circuits, but the approach remains fundamentally constrained by strong randomness assumptions on PQCs.
+% 2026.4.20
+% After decades of continuous development, quantum technology has come to play an indispensable role in a wide range of practical application scenarios~\cite{daley2022practical, huang2022quantum, bravyi2018quantum, lee2023evaluating, arvidsson2020quantum}, particularly in frontier fields such as metrology, precision measurement, and quantum machine learning~\cite{liu2024optimal,munoz2024photonic,de2025improving,yang2025programmable,haug2022natural,miao2024neural,tilly2022variational,wu2023quantumdarts}.
 
-%Although the local unitary 2-design assumption is reasonable for PQCs with sufficient randomness, it does not hold well in many cases within the NISQ era~\cite{holmes2022connecting}.  Additionally, for efficient PQCs tailored to specific problems, the local unitary 2-design assumption often fails to provide an accurate description of the system. As a result, it is hard to build a unified framework for all PQCs under this assumption. Even for unitary 1-designs, central to our zero-bias network study, a unified framework remains unattainable. Consequently, there is no clear level classification of trainability based on the structure of PQCs. A more general framework capable of adapting to all PQCs is necessary to overcome these limitations.
+% % PQC's ability to solve given problems stems from its tunable internal parameters, which allow us to optimize them within a fixed ansatz to accomplish tasks. In practical applications, such optimization is typically achieved using gradient descent and its variants. However, it has been shown that for a broad class of parametrized quantum circuits, particularly those that are universal, the gradient of the cost function will vanish exponentially with the size of the system\cite{holmes2022connecting,gong2024enhancing}, resulting in severe trainability issues and degraded optimization performance, known as the barren plateau. 
+% 2026.4.20
+% In these scenarios, the specific problems are typically solved through PQCs, a trainable architecture whose internal parameters are iteratively optimized using gradient-based optimizers to accomplish a variety of tasks. However, it has been shown that for a broad class of PQCs, particularly those universal ones, the gradient of the cost function vanishes exponentially with the system size, obstructing parameter updates and leading to severe trainability issues. This phenomenon, known as the barren plateau~\cite{mcclean2018barren}, constitutes a central obstacle to achieving quantum advantages in the noisy intermediate-scale quantum (NISQ) era.
+
+% % Therefore, for a given PQC architecture, evaluating the probability of its gradients vanishing exponentially under the current parameter distribution is a crucial topic in the study of circuit trainability.
+% 2026.4.20
+% % The original progress of the research on the trainability of VQAs comes after the introduction of unitary designs~\cite{gross2007evenly,roy2009unitary}. A unitary $t$-design is a set of unitary matrices that statistically mimics the average ensemble over unitary groups up to the $t$-th moment, which is a suitable object to describe the expectation and variance of gradients of PQCs. The $\gamma$-approximate unitary 2-design exists widely in PQCs with sufficient randomness for $\gamma$ exponentially small~\cite{roy2009unitary}. It is known that a sufficiently random PQC can realize a $\gamma$-approximate unitary 2-design within $\mathcal{O}(n)$ circuit depth ($n$ is the number of qubits)~\cite{dankert2009exact}. Because unitary 2-designs accurately approximate the statistical behavior of large and well-randomized circuits, local structures based on unitary 2-designs~\cite{holmes2022connecting, pesah2021absence, park2024hamiltonian, cerezo2021cost} have become standard assumptions in recent research.
+
+% %Previous studies have analyzed the gradient properties of a class of PQCs with strong expressivity, providing insights into the origin of barren plateaus~\cite{ortiz2021entanglement, holmes2022connecting, gong2024enhancing}. Such circuits typically exhibit strong randomness and can therefore be analyzed within the framework of unitary 2-designs. However, the unitary 2-design framework essentially serves as an analogue for the Haar random distribution, relying on the assumption that a PQC can approximate the uniform Haar measure to some extent. When a PQC lacks sufficient randomness, the subspace spanned by it is restricted to a small region in the whole Hilbert space, failing to satisfy the uniformity required by the Haar measure. As a result, the unitary 2-design framework cannot provide accurate estimates of gradient variances for such circuits. Recent studies have attempted to extend this framework to PQCs composed of multiple unitary 2-design blocks~\cite{pesah2021absence, cerezo2021cost, ragone2024lie}. Nevertheless, each block remains constrained by the strong randomness assumption.
+
+% 2026.4.20
+% Previous studies have commonly employed the unitary $2$-design framework to analyze the gradient properties of PQCs, for the purpose of understanding the causes of barren plateaus~\cite{ortiz2021entanglement, holmes2022connecting, gong2024enhancing, arrasmith2021effect, qi2023barren, liu2022estimating}. This framework is essentially a simulation of the Haar random distribution, relying on the assumption that the PQC under analysis can approximate the uniform Haar measure to some extent. However, PQCs that approximate the Haar measure admit strong randomness, which leads to poor trainability and a lack of practical utility. Existing works have attempted to extend this framework to analyze PQCs composed of multiple unitary $2$-design blocks~\cite{pesah2021absence, cerezo2021cost, ragone2024lie}. Nevertheless, each block remains constrained by the strong randomness assumption, still resulting in poor trainability.
+
+ % Gradient variance is widely used as a standard indicator of gradient vanishing. By Chebyshev’s inequality, a small gradient variance implies a high probability of vanishing gradients\cite{mcclean2018barren}, which reduces the trainability problem to the evaluation of gradient variances under a specified parameter distribution. Most existing studies evaluate gradient variances under the unitary 2-design assumption\cite{cerezo2021cost,ortiz2021entanglement,fontana2024characterizing,cunningham2025investigating}, where a unitary $t$-design denotes an ensemble of unitary operators whose statistical moments up to order $t$ coincide with those of the Haar random measure. The Haar measure enables a precise evaluation of gradients for circuits that approximate a global unitary 2-design. However, this assumption is only satisfied by PQCs with strong randomness. Such circuits exhibit gradient variances scaling as $d^{-2}$(with Hilbert space dimension $d$), leading to exponentially flat optimization landscapes and poor convergence. For circuits that do not satisfy this assumption, a reliable analytical framework remains lacking.
+ % Recent research has extended this analytical framework to cover circuits composed of multiple local unitary 2-designs; nevertheless, each local 2-design remains constrained by the strong randomness assumption\cite{pesah2021absence, schumann2024emergence}.
+ % Recent research has extended this analytical framework to circuits composed of multiple local unitary 2-designs, yet each local 2-design in this approach remains constrained by strong randomness assumptions.
+ % PQCs with strong randomness typically approximate a unitary 2-design, where a unitary $t$-design denotes an ensemble of unitary operators whose statistical moments up to order $t$ coincide with those of complete randomness. Most existing studies evaluate gradient variances under the unitary 2-design assumption. However, such circuits exhibit gradient variances scaling as $d^{-2}$(with Hilbert space dimension $d$), leading to exponentially flat optimization landscapes and poor convergence. Recent work has extended this framework to local unitary 2-designs, enlarging the class of analyzable circuits, but the approach remains fundamentally constrained by strong randomness assumptions on PQCs.
+
+% Although the local unitary 2-design assumption is reasonable for PQCs with sufficient randomness, it does not hold well in many cases within the NISQ era~\cite{holmes2022connecting}.  Additionally, for efficient PQCs tailored to specific problems, the local unitary 2-design assumption often fails to provide an accurate description of the system. As a result, it is hard to build a unified framework for all PQCs under this assumption. Even for unitary 1-designs, central to our zero-bias network study, a unified framework remains unattainable. Consequently, there is no clear level classification of trainability based on the structure of PQCs. A more general framework capable of adapting to all PQCs is necessary to overcome these limitations.
 
 %In the NISQ era, most practical PQCs used in training lack sufficient strong randomness to approximate unitary designs effectively. Moreover, when partial structural information about the problem is available, it is commonly exploited to design tailored, problem-specific quantum circuits. 
 
-In practice, quantum circuits are often designed with tailored structures for specific problems,  yet they typically lack sufficient randomness and thus fall outside the scope of existing analytical frameworks.
-Since such non-random PQCs play a central role in practical quantum circuit design and applications, it is essential to develop a general, computable gradient variance framework that can adapt to all types of PQCs.
+% In practice, quantum circuits are often designed with tailored structures for specific problems,  yet they typically lack sufficient randomness and thus fall outside the scope of existing analytical frameworks.
+% Since such non-random PQCs play a central role in practical quantum circuit design and applications, it is essential to develop a general, computable gradient variance framework that can adapt to all types of PQCs.
 
-In this Letter, we develop a measure-based framework to characterize the trainability of PQCs beyond the standard unitary design paradigm. 
-By introducing a class of polynomial probability measures, we prove that the distribution of any PQC can be approximated with arbitrary precision while preserving its gradient variance.
+% In practice, quantum circuits are often designed with tailored structures for specific problems, which can inevitably lead to a lack of randomness. 
+% For example, circuits composed of single-qubit rotation gates and two-qubit entangling gates in a shadow layer~\cite{watanabe2023optimizing}, as well as those generated by local Hamiltonian evolution under constrained quantum speed~\cite{park2024hamiltonian}, exhibit such structured behavior. Such non-random PQCs may exhibit strong trainability and play an important role in practical quantum circuit design and applications.
+% Common examples include shallow or locality-constrained hardware-efficient ansatz~\cite{watanabe2023optimizing}, circuits generated by continuous-time evolution under structured Hamiltonians~\cite{park2024hamiltonian}, and symmetry-constrained constructions arising from problem-specific considerations~\cite{lee2018generalized}. Such structural constraints introduce correlations and restrict the accessible unitary space, leading to significant deviations from idealized randomness assumptions. Recent work has sought to develop more general analytical approaches based on Jordan algebra decomposition~\cite{anschuetz2024unified}. Nonetheless, these frameworks typically rely on prior knowledge of the underlying mathematical structure of the quantum circuit within the proposed formalism, which is often difficult to determine for a given practical circuit. To systematically analyze the trainability and gradient properties of practical PQCs, it is essential to establish a general, computable framework for gradient variance that applies to all types of PQCs, and within which the mathematical structure behind a given circuit can be obtained straightforwardly.
+
+% 2026.4.20
+%In practice, quantum circuits are typically designed with tailored structures for specific problems, which inevitably leads to a lack of randomness. Such non-random PQCs can exhibit strong trainability and play a vital role in practical quantum circuit design and applications. Common examples include shallow or locality-constrained hardware-efficient ansatz~\cite{watanabe2023optimizing}, circuits generated by continuous-time evolution under structured Hamiltonians~\cite{park2024hamiltonian}, and symmetry-constrained constructions arising from problem-specific considerations~\cite{lee2018generalized}. Such structural constraints introduce correlations and restrict the accessible space, leading to significant deviations from idealized randomness assumptions. Recent work has sought to develop more general analytical approaches based on Jordan algebra decomposition~\cite{anschuetz2024unified}. However, these frameworks typically rely on prior knowledge of the underlying mathematical structure of the quantum circuits within the proposed formalism, which is often difficult to determine for a given circuit. To systematically analyze the trainability and gradient properties of practical PQCs, it is essential to establish a general, computable framework for gradient variance that applies to all types of PQCs, and within which the mathematical structure behind a given circuit can be obtained straightforwardly.
+% 2026.4.20
+%In this Letter, we develop a measure-based framework to characterize the trainability of PQCs beyond the standard unitary design paradigm. By introducing a class of polynomial probability measures, we prove that the distribution of any PQC can be approximated with arbitrary precision while preserving its gradient variance.Using zonal polynomials and Weingarten calculus~\cite{weingarten1978asymptotic, collins2003moments, collins2006integration}, we obtain explicit variance expressions and establish a level classification of trainability across orthogonal subspaces (Theorem~\ref{thm:1}).
 % (Propositions~\ref{prop: approx} and~\ref{prop: inv}). 
 % that approximates any circuit-induced distribution to arbitrary precision, with bounded deviation in gradient variance (cf. Propositions~\ref{prop: approx} and~\ref{prop: inv}). 
-Using zonal polynomials and Weingarten calculus~\cite{weingarten1978asymptotic, collins2003moments, collins2006integration}, we obtain explicit variance expressions and establish a level classification of trainability across orthogonal subspaces (Theorem~\ref{thm:1}).
+
 % As an example, we investigate the previously overlooked unitary 1-designs by ?. 
 % As an example, it gives the upper bound for previously overlooked unitary 1-designs (bypassing barren plateaus?)
 % we obtain explicit variance expressions, thereby establishing a comprehensive theory on the trainability of arbitrary PQCs.
 % Served as a bridge, it provides a level classification of trainability on PQCs from a measure perspective(cf. Theorem~\ref{thm:1}). 
 % We construct a family of measures representing the unitary 1-design in Proposition~\ref{prop:1-design}. It provides a tight upper bound of the barren plateaus landscape of the unitary 1-design, which cannot be calculated under the previous unitary 2-design framework.
-In particular, this framework identifies a significant trainability advantage in previously overlooked unitary 1-designs compared to higher-order designs. 
-Furthermore, we define the concept of improvement potential to quantify the maximal variance enhancement achievable under local disturbance (Theorem~\ref{thm:potential}), thereby providing a criterion for designing more trainable PQCs. These results provide analytical guidance to identify and enhance the trainability of parameterized quantum circuits in the noisy intermediate-scale quantum(NISQ) era.
+% 2026.4.20
+%In particular, this framework identifies a significant trainability advantage in previously overlooked unitary 1-designs compared to higher-order designs. Furthermore, we define the concept of improvement potential to quantify the maximal variance enhancement achievable under local disturbance (Theorem~\ref{thm:potential}), thereby providing a criterion for designing more trainable PQCs. These results provide analytical guidance to identify and enhance the trainability of parameterized quantum circuits in the NISQ era.
+
 % Rich examples are provided to illustrate the potential of various circuits. 
 % Finally, we employ numerical simulations to corroborate our analytical predictions.
 % In this Letter, we have established a measure-theoretic framework based on balanced polynomial measures to characterize the trainability of PQCs. We proved that balanced polynomial measures with arbitrary precision can approximate any PQC via a global phase trick. Within this framework, we propose a variance contribution derived from zonal polynomial decomposition. In particular, we rigorously prove a tight upper bound on the gradient variance for unitary 1-designs. Numerical simulations for a two-qubit system corroborate our theoretical predictions. As an additional application, we introduce the concept of improvement potential and provide an explicit criterion for evaluation, with examples demonstrating both negligible and significant enhancements. Overall, our results reveal the measure-level factors that govern trainability and provide guiding principles for designing more trainable PQCs.
 % Future research may benefit from integrating balanced polynomial measures with tools from dynamical Lie algebra theory~\cite{diaz2023showcasing, ragone2024lie}, potentially leading to a more practical and comprehensive analytical framework.
 
-\emph{\label{sec:2} Preliminaries.}---
-The performance of VQAs is related to the selected ansatz in the training. Generally, an ansatz consists of a PQC $U(\boldsymbol\theta)$, and a cost function $C(\boldsymbol\theta)$ with trainable parameters $\boldsymbol\theta$. Since trainability depends on the type of selected ansatz, we adopt the hardware-efficient ansatz as our foundational framework, which has been widely studied in theoretical research on barren plateaus~\cite{tilly2022variational, kandala2017hardware, wiersema2020exploring, wecker2015progress}. In a hardware-efficient ansatz, a PQC with $L$ layers is given by
-    $U(\boldsymbol\theta):= U(\theta_1, \cdots, \theta_L) = \prod_{l=1}^LU_l(\theta_l)W_l$,
-where  $U_l(\theta_l) = \exp(-iH_{l}\theta_{l})$ is a rotation gate and $W_l$ is the entangling gate chosen from a fixed set of unitary operators. The cost function is of the form $C(\boldsymbol{\theta}) = \operatorname{Tr}[U(\boldsymbol\theta)\rho U^\dagger(\boldsymbol\theta)O]$ .
+\emph{\label{sec:2} Preliminaries.}
+% The performance of VQAs is related to the selected ansatz in the training. Generally, an ansatz consists of a PQC $U(\boldsymbol\theta)$, and a cost function $C(\boldsymbol\theta)$ with trainable parameters $\boldsymbol\theta$. Since trainability depends on the type of selected ansatz, we adopt the hardware-efficient ansatz as our foundational framework, which has been widely studied in theoretical research on barren plateaus~\cite{tilly2022variational, kandala2017hardware, wiersema2020exploring, wecker2015progress}. In a hardware-efficient ansatz, 
+PQCs play a central role in near-term quantum computing, serving as the primary framework for implementing variational quantum algorithms. Structurally, a circuit $U(\boldsymbol{\theta})$ consists of a sequence of parameterized quantum gates, whose tunable parameters $\boldsymbol{\theta}$ control the circuit’s evolution. Formally, under the hardware-efficient ansatz, $U(\boldsymbol{\theta})$ is given by
+    $U(\theta_1, \cdots, \theta_L) = \prod_{l=1}^LU_l(\theta_l)W_l$,
+where  $U_l(\theta_l) = \exp(-iH_{l}\theta_{l})$ is a rotation gate and $W_l$ is the entangling gate chosen from a fixed set of unitary operators. The cost function is of the form $C(\boldsymbol{\theta}) = \operatorname{Tr}[U(\boldsymbol\theta)\rho U^\dagger(\boldsymbol\theta)O]$.
 Here, $\rho$ is the input density matrix, $O$ is the target observable, and the rotation angles $\{\theta_j\}$ are typically assumed to be independent.
-Following the standard research on barren plateaus~\cite{mcclean2018barren, holmes2022connecting}, we characterize trainability by the variance of the gradient $\operatorname{Var}_{\boldsymbol\theta}[\partial_\ell C]:=\operatorname{Var}_{\boldsymbol\theta}[\partial C/\partial\theta_\ell]$. 
+Following the standard research on barren plateaus~\cite{mcclean2018barren, holmes2022connecting}, we characterize trainability by the gradient variance.
 
 %As the primary issue in our paper, we apply the same criteria in standard research on barren plateaus~\cite{mcclean2018barren, holmes2022connecting} to evaluate trainability. Given a PQC structure $U(\theta)$ with trainable parameters $\theta$, the variance of gradients ${\rm Var}_\theta[\partial_\ell C]$ represents the trainability of the network $\{U(\theta), C(\theta)\}$, where we denote $\partial_\ell C:= \partial C/\partial \theta_\ell$. The larger the value of  ${\rm Var}_\theta[\partial_\ell C]$, the better the network's trainability.
 
@@ -198,38 +284,45 @@ Following the standard research on barren plateaus~\cite{mcclean2018barren, holm
 
 
 
-To analyze the structure of the partial derivative $\partial_\ell C$, we split the circuit at the parameter $\theta_\ell$ into two parts, $U_L$ and $U_R$, i.e., $U = U_L U_R$, where $U_L(\boldsymbol\theta) = \prod_{j=\ell+1}^L U_j(\theta_j) W_j$, $\ U_R(\boldsymbol\theta) = \prod_{i=1}^\ell U_i(\theta_i) W_i$. Consequently, the partial derivative $\partial_\ell C$ can be expressed as
+To analyze the structure of the partial derivative $\partial_\ell C:=\partial C/\partial\theta_\ell$, we split the circuit at the parameter $\theta_\ell$ into two parts, $U_L$ and $U_R$, i.e., $U = U_L U_R$, where $U_L(\boldsymbol\theta) = \prod_{j=\ell+1}^L U_j(\theta_j) W_j$, $\ U_R(\boldsymbol\theta) = \prod_{i=1}^\ell U_i(\theta_i) W_i$. Consequently, the partial derivative $\partial_\ell C$ can be expressed as
 \begin{equation}
     \partial_\ell C = i\operatorname{Tr}[U_R\rho U_R^\dagger [H_\ell, U_L^\dagger O U_L]].
     \label{eq: var}
 \end{equation}
 Let $X_L = i[H_\ell, U_L^\dagger O U_L]$, then the gradient variance can be expressed explicitly as 
 \begin{equation}
-    {\rm Var}_{\boldsymbol\theta}[\partial_\ell C] =\int\dif\mu_L(U_L)\dif\mu_R(U)\operatorname{Tr}[U\rho U^\dagger X_L]^2.
+    {\rm Var}^{(\mu_L,\mu_R)}(\rho, O) =\int\dif\mu_L(U_L)\dif\mu_R(U_R)\operatorname{Tr}[U_R\rho U_R^\dagger X_L]^2,
     \label{eq:var2}
 \end{equation}
-
+where $U_L\sim \mu_L$ and $U_R\sim \mu_R$, which means for any measurable set $A\subseteq \mathcal{U}(d)$, $\mathbb{P}(U_L\in A) = \mu_L(A),\ \mathbb{P}(U_R\in A) = \mu_R(A)$. Here $\mathcal{U}(d)$ denotes the unitary group of degree $d$, and $\mathbb{P}$ is the probability distribution function.
 % In practice, by uniformly sampling the parameters of $U_L$ or $U_R$ from $[0, 2\pi)$, we can ensure that the circuit satisfies the zero-bias assumption $\mathbb{E}_\theta[\partial_\ell C] = 0$. Under this assumption, the gradient variance simplifies to the second moment: ${\rm Var}_\theta[\partial_\ell C] = \mathbb{E}_\theta[(\partial_\ell C)^2]$.
 
 
-Since the form of $\partial_\ell C$ is associated with the 1-moment of $U_R$ and $U_L$, the concept of unitary designs is naturally applied to the evaluation of gradient variances. Formally, a probability measure $\mu$ is said to form a unitary t-design\cite{gross2007evenly, dankert2009exact} if, for every homogeneous polynomial $p\in {\rm Hom}( U(d), t, t)$, we have $\int \dif \mu(U) p(U) = \int \dif\mu_H(U)p(U)$, where ${\rm Hom}( U(d), t, t)$ denotes the set of all polynomials that are homogeneous of degree $t$ in both the matrix entries of $U$ and $U^\dagger$, and $\mu_H$ is the normalized Haar measure. 
+Since the form of $\partial_\ell C$ is associated with the 1-moment of $U_R$ and $U_L$, the concept of unitary designs is naturally applied to the evaluation of gradient variances. Formally, a probability measure $\mu$ is said to form a unitary t-design\cite{gross2007evenly, dankert2009exact} if, for every polynomial $p\in {\rm Hom}(\mathcal{U}(d), t, t)$, we have $\int \dif \mu(U) p(U) = \int \dif\mu_H(U)p(U)$, where ${\rm Hom}(\mathcal{U}(d), t, t)$ denotes the set of all homogeneous polynomials of degree $t$ in both the matrix entries of $U$ and $U^\dagger$, and $\mu_H$ is the normalized Haar measure. 
 
-\emph{\label{sec:3} Polynomial approximation to general PQC.}---As previously discussed, the local unitary 2-design assumption is not fit for many practical PQCs. A new framework is required to develop a general theory of trainability. In the following, we introduce the framework of balanced polynomial measures, which serves as the foundation for our work.
+As discussed in the Introduction, the assumption of a local unitary $2$-design is not suitable for many practical PQCs. A new framework is required to develop a general theory of trainability. In the following, we introduce the framework of polynomial measures, which serves as the foundation for our work.
 
-When a PQC is equipped with a specific parameter distribution, it induces a probability measure $\mu\in\mathcal{P}( U(d))$.
+\emph{\label{sec:3} Polynomial approximation to general PQCs.}
+When a PQC is equipped with a specific parameter distribution, it induces a probability measure $\mu$.
 % Given a PQC $U(\theta)$, let $S$ be the subset of $ U(d)$ generated by $U(\theta)$. We can view the PQC with a specific parameter distribution as a probability measure $\mu$ defined on $S$. This measure $\mu$ indeed induces a probability distribution $T_\mu\in\mathcal{D}'( U(d))^1:= \mathcal{D}'( U(d))\cap \mathcal{P}( U(d))$ by
 % \begin{equation}
 %     T_\mu(\phi) := \int_S\phi|_S\dif\mu,\quad \forall\phi\in\mathcal{D}( U(d)).
 %     \label{eq:embedding}
 % \end{equation}
 % Here, $\mathcal{D}'( U(d))$ denotes the space of all the distributions on $ U(d)$. Through this approach, we can embed $\mathcal{P}( U(d))$ into $\mathcal{D}'( U(d))^1$.
-We call a finite measure $\mu$ a polynomial measure if the Radon–Nikodym derivative~\cite{folland1999real} $\dif \mu/ \dif \mu_H$ is a polynomial function. Let $\mathcal{G}( U(d))$ denote the set of all real polynomial measures.
+Here we introduce the notion of a {\itshape polynomial measure}. A finite measure $\mu$ is said to be polynomial if it is absolutely continuous with respect to $\mu_H$ and its Radon–Nikodym derivative $\mathrm{d}\mu/\mathrm{d}\mu_H$~\cite{folland1999real} is a polynomial.
+% We call a finite measure $\mu$ a polynomial measure if the Radon–Nikodym derivative~\cite{folland1999real} $\dif \mu/ \dif \mu_H$ is a polynomial function. Let $\mathcal{G}(\mathcal{U}(d))$ denote the set of all real polynomial measures.
 % Furthermore, a polynomial $f$ on $ U(d)$ is balanced if every monomial in $f$ belongs to the space ${\rm Hom} ( U(d), t, t)$ for some $t\in\mathbb{Z}_+$. 
-Since the set $\mathcal{I}(U(d)): =\mathcal{P}(U(d))\cap \mathcal{G}(U(d))$ is weak$^*$-dense in $\mathcal{P}( U(d))$, it leads to the universal approximation of arbitrary PQCs by polynomial probability measures. Let ${\rm Var}_{\boldsymbol\theta}^{(\mu_L,\mu_R)}[\partial_\ell C(\theta)]$ denote the gradient variance with $U_L\sim\mu_L$ and $U_R\sim \mu_R$, i.e., each drawn from the corresponding probability measure. Then, two close probability measure pairs $(\mu_L,\mu_R)$ and $(\mu_L',\mu_R')$ would lead that ${\rm Var}_{\boldsymbol\theta} ^{(\mu_L,\mu_R)}[\partial_\ell C]$ are close to ${\rm Var}_{\boldsymbol\theta} ^{(\mu_L',\mu_R')}[\partial_\ell C]$. This compatibility implies that the trainability of arbitrary PQCs can be characterized by integrals of polynomial functions with respect to the Haar measure, whose evaluation is enabled by Weingarten calculus. Figure~\ref{fig: dense} illustrates the relative positions of the covered spaces of unitary 2-designs and polynomial measures in $\mathcal{P}( U(d))$.
-\begin{figure}[htbp]
-    \includegraphics[width=0.9\linewidth]{figures/dense.pdf}
-    \caption{\label{fig: dense}Schematic illustration of the relative positions of polynomial probability measures $\mathcal{I}(U(d))$ and unitary 2-designs within the space of probability measures $\mathcal{P}(U(d))$. The green discrete points represent elements of $\mathcal{I}(U(d))$, which are densely distributed throughout $\mathcal{P}(U(d))$, while the red region denotes the set of unitary 2-designs, concentrated in a small subset of $\mathcal{P}(U(d))$.}
-\end{figure}
+% Since the set $\mathcal{I}(\mathcal{U}(d)): =\mathcal{P}(\mathcal{U}(d))\cap \mathcal{G}(\mathcal{U}(d))$ is weak$^*$-dense in $\mathcal{P}(\mathcal{U}(d))$, it leads to the universal approximation of arbitrary PQCs by polynomial probability measures. Let ${\rm Var}_{\boldsymbol\theta}^{(\mu_L,\mu_R)}[\partial_\ell C(\theta)]$ denote the gradient variance with $U_L\sim\mu_L$ and $U_R\sim \mu_R$. Then, two close probability measure pairs $(\mu_L,\mu_R)$ and $(\mu_L',\mu_R')$ under this topology would lead that ${\rm Var}_{\boldsymbol\theta} ^{(\mu_L,\mu_R)}[\partial_\ell C]$ are close to ${\rm Var}_{\boldsymbol\theta} ^{(\mu_L',\mu_R')}[\partial_\ell C]$ in the real number sense.
+The space of polynomial probability measures is dense (in an appropriate sense) in the space of probability measures~\cite{denseness_note}.
+In other words, for an arbitrary PQC with a given parameter distribution, there exists a sequence of polynomial probability measures that approximates the corresponding measure to arbitrary accuracy. One can refer to the Supplementary Materials Sec.~\RomanNumeralCaps{3} for the rigorous proof.
+% Let ${\rm Var}_{\boldsymbol\theta}^{(\mu_L,\mu_R)}[\partial_\ell C(\boldsymbol\theta)]$ denote the gradient variance with $U_L \sim \mu_L$ and $U_R \sim \mu_R$. 
+By continuity of the function $(\mu_L, \mu_R)\mapsto{\rm Var}^{(\mu_L,\mu_R)}(\rho, O)$, if two pairs of probability measures $(\mu_L,\mu_R)$ and $(\mu_L',\mu_R')$ produce close expectation values for the relevant observables, the corresponding gradient variances ${\rm Var}_{\boldsymbol\theta}^{(\mu_L,\mu_R)}(\rho, O)$ and ${\rm Var}_{\boldsymbol\theta}^{(\mu_L',\mu_R')}(\rho, O)$ are also close. The proof of continuity would also be provided in the Supplementary Materials Sec.~\RomanNumeralCaps{3}. This compatibility implies that the trainability of arbitrary PQCs can be characterized by integrals of polynomial functions with respect to the Haar measure, whose evaluation is enabled by Weingarten calculus. 
+% Figure~\ref{fig: dense} illustrates the relative positions of the covered spaces of unitary 2-designs and polynomial measures in $\mathcal{P}( U(d))$.
+% \begin{figure}[htbp]
+%     \includegraphics[width=0.9\linewidth]{dense.pdf}
+%     \caption{\label{fig: dense}Schematic illustration of the relative positions of polynomial probability measures $\mathcal{I}(U(d))$ and unitary 2-designs within the space of probability measures $\mathcal{P}(U(d))$. The green discrete points represent elements of $\mathcal{I}(U(d))$, which are densely distributed throughout $\mathcal{P}(U(d))$, while the red region denotes the set of unitary 2-designs, concentrated in a small subset of $\mathcal{P}(U(d))$.}
+% \end{figure}
 
 % Since our goal is to make a computational framework of gradient variances for general PQCs, a reasonable requirement is that the approximation of pairs of probability measures should be compatible with the variance approximation. Indeed, this can be completed via the following approximation proposition:
 % \begin{proposition}
@@ -264,9 +357,21 @@ Since the set $\mathcal{I}(U(d)): =\mathcal{P}(U(d))\cap \mathcal{G}(U(d))$ is w
 % -----------------------------------------------------------------------------------------------
 %Polynomial measures provide a computable framework for evaluating gradient variances, and we analyze their computability as follows. A polynomial $f$ on $ U(d)$ is called balanced if every monomial of $f$ belongs to the space ${\rm Hom} ( U(d), t, t)$ for some $t\in\mathbb{Z}_+$. In our proposed framework, only the balanced components of the measure contribute to the final variance. Balanced polynomials can be expanded as linear combinations of zonal polynomials $Z_{\boldsymbol\lambda}(U)$, labeled by indices ${\boldsymbol\lambda} = ({\boldsymbol\lambda}_1, {\boldsymbol\lambda}_2, \ldots,{\boldsymbol\lambda}_d)$ satisfying ${\boldsymbol\lambda}_i \in \mathbb{Z}$ and ${\boldsymbol\lambda}_1 \geq {\boldsymbol\lambda}_2 \geq \cdots \geq {\boldsymbol\lambda}_d$. Consequently, by expanding $\mathrm{d}\mu_R / \mathrm{d}\mu_H$, the variance can be decomposed into a sum of several computable components according to Eq.~\eqref{eq:var2}. Notably, when expanding the gradient variance via zonal polynomials, the orthogonality properties of zonal polynomials restrict the contributing terms to those with indices lying in the set $S = \{{\boldsymbol\lambda}: |{\boldsymbol\lambda}| = 0, |{\boldsymbol\lambda}_+| \leq 2\}$, where $|{\boldsymbol\lambda}_+|$ denotes the sum of positive entries of ${\boldsymbol\lambda}$. There are $|S| = 6$ such types of zonal polynomials, whose explicit forms are detailed in \cite{roy2009unitary}.
 
-In the polynomial measure $\mathrm{d}\mu_R / \mathrm{d}\mu_H$, only a portion of its components contribute to the gradient variance. Every monomial in these components on $\mathcal{U}(d)$ belongs to the space $\operatorname{Hom}(\mathcal{U}(d), t, t)$ for some $t \in \mathbb{Z}_+$, and we refer to them as balanced components. Balanced components can be expanded as linear combinations of zonal polynomials $Z_{\boldsymbol\lambda}(U)$, labeled by indices ${\boldsymbol\lambda} = ({\lambda}_1, {\lambda}_2, \ldots, {\lambda}_d)$ satisfying ${\lambda}_i \in \mathbb{Z}$ and ${\lambda}_1 \geq {\lambda}_2 \geq \cdots \geq {\lambda}_d$. When the balanced components in the measure are expanded via zonal polynomials, the total gradient variance is consequently decomposed into a sum of several components. Notably, the orthogonality properties of zonal polynomials restrict the contributing terms to those with indices lying in the set $S = \{{\boldsymbol\lambda}: |{\boldsymbol\lambda}| = 0, |{\boldsymbol\lambda}_+| \leq 2\}$, where $|{\boldsymbol\lambda}_+|$ denotes the sum of the positive entries of ${\boldsymbol\lambda}$.There are $|S| = 6$ such types of zonal polynomials, whose explicit forms are detailed in \cite{roy2009unitary}.
+% For any polynomial probability measure $\mu$ with the Radon-Nikodym derivative $f$, not all monomials in $f$ contribute to the gradient variance. By the Weingarten theorem, only the monomial belonging to the space $\operatorname{Hom}(\mathcal{U}(d), t, t)$ for some $t \in \mathbb{Z}_+$ has a contribution to the gradient variance~\cite{fukuda2019rtni}, and we refer to the sum of all these monomials as the {\itshape balanced component} of $f$. 
+% The balanced component can be further expanded as a linear combination of so-called zonal polynomials~\cite{james1961zonal,james1964distributions,constantine1963some}. Zonal polynomials appear in matrix-variate distributions such as the Wishart distribution when integrating over compact Lie groups~\cite{constantine1963some}.  Any irreducible representation of the unitary group $ U(d)$ can be labeled by a non-increasing integer sequence ${\boldsymbol\lambda}:=({\lambda}_1,{\lambda}_2, \cdots,{\lambda}_d)$ of length $d$, where ${\lambda}_i\in\mathbb{Z}$ and ${\lambda}_1\geq{\lambda}_2\geq\cdots\geq {\lambda}_d$ \cite{bump2004lie}. For each irreducible representation ${\boldsymbol\lambda}$, one can define a family of zonal polynomials $\{Z_{{\boldsymbol\lambda}, V}: V\in U(d)\}$. 
+% When the balanced components in the measure are expanded via zonal polynomials, the total gradient variance is consequently decomposed into a sum of several independent components because of the orthogonality properties of zonal polynomials across distinct indices, i.e. $\left<Z_{{\boldsymbol\lambda}, V_1}, Z_{{\boldsymbol\lambda}', V_2}\right> = \delta_{{\boldsymbol\lambda},{\boldsymbol\lambda}'}\left<Z_{{\boldsymbol\lambda}, V_1}, Z_{{\boldsymbol\lambda}, V_2}\right>$ for indices $\lambda,\lambda'$. Since $\operatorname{Tr}[U\rho U^\dagger X_L]^2$ is a balanced polynomial with respect to $U$ of degree up to $2$. At the level of calculating the gradient variance, we can only restrict the contributing terms to those with indices lying in the set $S = \{{\boldsymbol\lambda}: |{\boldsymbol\lambda}| = 0, |{\boldsymbol\lambda}_+| \leq 2\}$, where $|{\boldsymbol\lambda}_+|$ denotes the sum of the positive entries of ${\boldsymbol\lambda}$. There are $|S| = 6$ such types of zonal polynomials, whose explicit forms are detailed in \cite{roy2009unitary}. For the detailed discussion about the property of zonal polynomials and its application to calculating gradient variances, one can refer to the Supplementary Materials Sec.~\RomanNumeralCaps{3}.
+Given a polynomial probability measure $\mu$ with the Radon–Nikodym derivative $f$, not all monomials in $f$ contribute to the gradient variance. 
+By the Weingarten calculus, only those monomials lying in $\operatorname{Hom}(\mathcal{U}(d), t, t)$ for some $t \in \mathbb{Z}_+$ contribute to the integral~\cite{fukuda2019rtni}. We refer to the sum of such monomials as the \emph{balanced component} of $f$.
+The balanced component admits a decomposition in terms of zonal polynomials~\cite{james1961zonal,james1964distributions,constantine1963some}, which naturally arise in matrix-variate distributions (e.g., the Wishart distribution) and in integration over compact Lie groups~\cite{constantine1963some}. For our case on the unitary group $\mathcal{U}(d)$, these polynomials are indexed by irreducible representations of $\mathcal{U}(d)$, which are labeled by non-increasing integer sequences ${\boldsymbol\lambda} = (\lambda_1,\dots,\lambda_d)$ with $\lambda_1 \ge \cdots \ge \lambda_d$~\cite{bump2004lie}. Let $\chi_\lambda$ denote the character of the irreducible representation $V_\lambda$ and $d_{\boldsymbol{\lambda}}$ be its dimension. For each such index ${\boldsymbol\lambda}$, one can associate a family of zonal polynomials~\cite{roy2009unitary}, which are defined by
+\begin{equation}
+    Z_{\boldsymbol{\lambda}, V}(U) := d_{\boldsymbol{\lambda}}\chi_{\boldsymbol{\lambda}}(V^\dagger U).
+\end{equation}
+According to the orthogonality relation $\langle Z_{{\boldsymbol\lambda}, V_1}, Z_{{\boldsymbol\lambda}', V_2} \rangle = \delta_{{\boldsymbol\lambda},{\boldsymbol\lambda}'}\langle Z_{{\boldsymbol\lambda}, V_1}, Z_{{\boldsymbol\lambda}, V_2} \rangle$, one can expand the balanced component in the basis of zonal polynomials, which yields a decomposition of the gradient variance into independent contributions.
+Moreover, since $\operatorname{Tr}[U \rho U^\dagger X_L]^2$ is a balanced polynomial in $U$ of degree at most $2$, only indices in the set $S_\alpha = \{{\boldsymbol\lambda} : |{\boldsymbol\lambda}| = 0,\; |{\boldsymbol\lambda}_+| = \alpha\},\ \alpha\leq 2$ contribute to the gradient variance, where $|{\boldsymbol\lambda}_+|$ denotes the sum of the positive entries of ${\boldsymbol\lambda}$. There are $\sum_{\alpha=0}^2 |S_\alpha| = 6$ such indices, and the corresponding zonal polynomials are given in~\cite {roy2009unitary} explicitly.
+Further details on the properties of zonal polynomials and their application to gradient variance calculations are provided in Supplementary Materials Sec.~\RomanNumeralCaps{3}.
+% If we further assume that each parameter satisfies $\theta_i\sim \mathrm{Uniform}[0, 2\pi)$, then the polynomial measures to approximate the PQC (generated by single rotation gates and fixed entangling gates) can be exactly obtained by the following proposition:
 
-If we further assume that each parameter satisfies $\theta_i\sim \mathrm{Uniform}[0, 2\pi)$, then the polynomial measures to approximate each component of PQC (including single rotation gates and fixed entangling gates) can be exactly obtained by the following theorem:
+Assume further that the parameters $\theta_l$ are i.i.d.\ uniformly distributed on $[0,2\pi)$, then the polynomial measure associated with the PQC admits the explicit form given in the following proposition.
 % \begin{theorem}
 %     Let $R = \exp(iP\theta)$ be a rotation gate, where $P=\otimes_{i=1}^n\sigma_i$ is a Pauli word and $\theta\sim \mathrm{Uniform}[0, 2\pi)$. The distribution of $R$ admits an approximation by a sequence of polynomials $\{f_P^m\}_{m=1}^\infty$, where 
 %     \begin{equation}
@@ -282,50 +387,94 @@ If we further assume that each parameter satisfies $\theta_i\sim \mathrm{Uniform
 %     \end{equation}
 %     \label{thm:comp}
 % \end{theorem}
-\begin{theorem}
-    Let $R = \exp(iP\theta)$ be a rotation gate, where $P=\otimes_{i=1}^n\sigma_i$ is a Pauli word and $\theta\sim \mathrm{Uniform}[0, 2\pi)$. The distribution of $R$ admits an approximation by the following partial sums 
-    \begin{equation}
-        p_N = \frac{1}{2\pi}\int_0^{2\pi}\dif\theta\sum_{|{\boldsymbol\lambda}|\leq N}Z_{{\boldsymbol\lambda}, e^{iP\theta}},\quad N\in \mathbb{Z}_+.
-    \end{equation}
-    Furthermore, at the level of computing gradient variance, the distribution of $R$ is equivalent to
+% \begin{theorem}
+%     Let $R = \exp(iP\theta)$ be a rotation gate, where $P=\otimes_{i=1}^n\sigma_i$ is a Pauli word and $\theta\sim \mathrm{Uniform}[0, 2\pi)$. The distribution of $R$ admits an approximation by the following partial sums 
+%     \begin{equation}
+%         p_N = \frac{1}{2\pi}\int_0^{2\pi}\dif\theta\sum_{|{\boldsymbol\lambda}|\leq N}Z_{{\boldsymbol\lambda}, e^{iP\theta}},\quad N\in \mathbb{Z}_+.
+%     \end{equation}
+%     Furthermore, at the level of computing gradient variance, the distribution of $R$ is equivalent to
+%     \begin{equation}
+%         \begin{aligned}
+%            p_{2,b} &= 1 + \frac{1}{2}(Z_{(1,0,\cdots,0,-1),I} + Z_{(1,0,\cdots,0,-1),P})
+%             + \frac{1}{4}\\
+%             &\sum_{|{\boldsymbol\lambda}| = 0,\ |{\boldsymbol\lambda}_+| = 2}(Z_{{\boldsymbol\lambda},I} + Z_{{\boldsymbol\lambda},P} + Z_{{\boldsymbol\lambda},\frac{(I+iP)}{\sqrt{2}}} + Z_{{\boldsymbol\lambda},\frac{(I-iP)}{\sqrt{2}}}).
+%         \end{aligned}
+%     \end{equation}
+%     For a fixed entangling gate $W_\ell$, its distribution is given by the Dirac delta distribution concentrated at $W_\ell$.
+%     % \begin{equation}
+%     %     \delta_{W_\ell}(V) = \left\{\begin{aligned}
+%     %         \infty,\quad &W_\ell = V\\
+%     %         0,\quad &{\rm otherwise}
+%     %     \end{aligned}\right. .
+%     % \end{equation}
+%     \label{thm:comp}
+% \end{theorem}
+% The probability measure of the whole circuit is just the convolution of the probability measures of each component in order. Thus, we can summarize the following corollary:
+% % \begin{corollary}
+% %     Given an arbitrary PQC of the form $U(\theta) = \prod_{j=1}^L \exp(iP_j\theta_j)W_j$, this circuit can be approximated by a sequence of polynomial measures $\{\nu_m\}_{m=1}^\infty$ with derivative 
+% %     \begin{equation}
+% %         \frac{\dif\nu_m}{\dif\mu_H} = f_{P_1}^m * \delta_{W_1} * \cdots *f_{P_L}^m * \delta_{W_L}.
+% %     \end{equation}
+% %     \label{cor:approx_prac}
+% % \end{corollary}
+% \begin{corollary}
+% Let $U(\boldsymbol\theta) = \prod_{j=1}^L\exp(iP_j\theta_j)W_j$, where $P_j$ are Pauli words and $U\sim {\rm Uniform}[0,2\pi)$ independently. Then, the gradient variance induced by the circuit $U$ coincides with that of the polynomial $f$ defined below.
+% \begin{equation}
+%     \begin{aligned}
+%       f = 1 + &\frac{1}{2^{L}}\sum_{i_1,\ldots,i_L=1}^{2} Z_{(1,0,\ldots,0,-1),\,\prod_{s=1}^{L} P_s^{i_s}W_s}+\\
+%        &\frac{1}{4^{L}}\sum_{|{\boldsymbol\lambda}|=0,\ |{\boldsymbol\lambda}_+|=2}\sum_{i_1,\ldots,i_L=1}^{4}Z_{{\boldsymbol\lambda},\,\prod_{s=1}^{L} P_s^{i_s}W_s}.
+%     \end{aligned}
+% \end{equation}
+% Here, for a Pauli word $P$, we write $ P^1 := I, \ P^2 := P, \ P^3 := (I+iP)/\sqrt{2}, \ P^4 := (I-iP)/\sqrt{2}$.
+% \label{cor:approx_prac}
+% \end{corollary}
+% Corollary~\ref{cor:approx_prac} provides an explicit polynomial measure family to approximate any PQC under the hardware-efficient ansatz. Thus, the gradient variance of an arbitrary PQC can be obtained by the Weingarten calculus of polynomials with respect to the Haar measure.
+% For rigorous approximation statements and proofs of Theorem~\ref{thm:comp} and Corollary~\ref{cor:approx_prac}, one can refer to the Supplementary Materials Sec.~\RomanNumeralCaps{2}.
+\begin{proposition}
+Let $U(\boldsymbol{\theta}) = \prod_{l=1}^{L} U_l(\theta_l) W_l$ be a parameterized quantum circuit composed of fixed entangling gates $\{W_l\}$ and parameter-dependent rotation gates $\{U_l(\theta_l) := \exp(-i P_l \theta_l)\}$, where each $P_l$ is a Pauli word and the parameters $\theta_l$ are i.i.d.\ uniformly distributed on $[0,2\pi)$. 
+For a Pauli word $P$, define
+\begin{equation}
+    P_1 := I, \quad 
+    P_2 := P, \quad 
+    P_3 := \frac{I + iP}{\sqrt{2}}, \quad 
+    P_4 := \frac{I - iP}{\sqrt{2}}.
+\end{equation}
+Then the following statements hold:
+\begin{enumerate}
+    \item \textbf{Parameter-dependent rotation gate.}  
+    The probability distribution of a parameter-depedent rotation gate $U_l(\theta_l)$ is represented by the polynomial
     \begin{equation}
         \begin{aligned}
-           p_{2,b} &= 1 + \frac{1}{2}(Z_{(1,0,\cdots,0,-1),I} + Z_{(1,0,\cdots,0,-1),P})
-            + \frac{1}{4}\\
-            &\sum_{|{\boldsymbol\lambda}| = 0,\ |{\boldsymbol\lambda}_+| = 2}(Z_{{\boldsymbol\lambda},I} + Z_{{\boldsymbol\lambda},P} + Z_{{\boldsymbol\lambda},\frac{(I+iP)}{\sqrt{2}}} + Z_{{\boldsymbol\lambda},\frac{(I-iP)}{\sqrt{2}}}).
+            1 + \frac{1}{2} \sum_{k=1}^2
+            Z_{(1,0,\cdots,0,-1),\,P_{l,k}} + \frac{1}{4} 
+            \sum_{\boldsymbol{\lambda}\in S_2}
+            \sum_{k=1}^{4}
+            Z_{\boldsymbol{\lambda},\,P_{l,k}}.
         \end{aligned}
+        \label{eq:single}
     \end{equation}
-    For a fixed entangling gate $W_\ell$, its distribution is given by the Dirac delta distribution concentrated at $W_\ell$.
-    % \begin{equation}
-    %     \delta_{W_\ell}(V) = \left\{\begin{aligned}
-    %         \infty,\quad &W_\ell = V\\
-    %         0,\quad &{\rm otherwise}
-    %     \end{aligned}\right. .
-    % \end{equation}
-    \label{thm:comp}
-\end{theorem}
-The probability measure of the whole circuit is just the convolution of the probability measures of each component in order. Thus, we can summarize the following corollary:
-% \begin{corollary}
-%     Given an arbitrary PQC of the form $U(\theta) = \prod_{j=1}^L \exp(iP_j\theta_j)W_j$, this circuit can be approximated by a sequence of polynomial measures $\{\nu_m\}_{m=1}^\infty$ with derivative 
-%     \begin{equation}
-%         \frac{\dif\nu_m}{\dif\mu_H} = f_{P_1}^m * \delta_{W_1} * \cdots *f_{P_L}^m * \delta_{W_L}.
-%     \end{equation}
-%     \label{cor:approx_prac}
-% \end{corollary}
-\begin{corollary}
-Let $U(\boldsymbol\theta) = \prod_{j=1}^L\exp(iP_j\theta_j)W_j$, where $P_j$ are Pauli words and $U\sim {\rm Uniform}[0,2\pi)$ independently. Then, the gradient variance induced by the circuit $U$ coincides with that of the polynomial $f$ defined below.
-\begin{equation}
-    \begin{aligned}
-      f = 1 + &\frac{1}{2^{L}}\sum_{i_1,\ldots,i_L=1}^{2} Z_{(1,0,\ldots,0,-1),\,\prod_{s=1}^{L} P_s^{i_s}W_s}+\\
-       &\frac{1}{4^{L}}\sum_{|{\boldsymbol\lambda}|=0,\ |{\boldsymbol\lambda}_+|=2}\sum_{i_1,\ldots,i_L=1}^{4}Z_{{\boldsymbol\lambda},\,\prod_{s=1}^{L} P_s^{i_s}W_s}.
-    \end{aligned}
-\end{equation}
-Here, for a Pauli word $P$, we write $ P^1 := I, \ P^2 := P, \ P^3 := (I+iP)/\sqrt{2}, \ P^4 := (I-iP)/\sqrt{2}$.
-\label{cor:approx_prac}
-\end{corollary}
-Corollary~\ref{cor:approx_prac} provides an explicit polynomial measure family to approximate any PQC under the hardware-efficient ansatz. Thus, the gradient variance of an arbitrary PQC can be obtained by the Weingarten calculus of polynomials with respect to the Haar measure.
-For rigorous approximation statements and proofs of Theorem~\ref{thm:comp} and Corollary~\ref{cor:approx_prac}, one can refer to the Supplementary Materials Sec.~\RomanNumeralCaps{2}.
+    \item \textbf{Fixed entangling gate.}  
+     The probability distribution of a fixed entangling gate $W_l$ is represented by the Dirac distribution concentrated at $W_l$.
 
+    \item \textbf{Full circuit.}  
+    The probability distribution of the full circuit $U(\boldsymbol{\theta})$ is represented by the polynomial
+    \begin{equation}
+        \begin{aligned}
+            1 
+            + \frac{1}{2^{L}} 
+            &\sum_{i_1,\ldots,i_L=1}^{2} 
+            Z_{(1,0,\ldots,0,-1),\,\prod_{s=1}^{L} P_{s,i_s}W_s}\\
+            + \frac{1}{4^{L}} 
+            &\sum_{\boldsymbol{\lambda}\in S_2}
+            \sum_{i_1,\ldots,i_L=1}^{4} 
+            Z_{\boldsymbol{\lambda},\,\prod_{s=1}^{L} P_{s,i_s} W_s}.
+        \end{aligned}
+     \end{equation}
+\end{enumerate}
+Here, “represented by the polynomial’’ means that, when computing gradient variances, one may equivalently replace the probability measure of the circuit with the polynomial measure associated with the above polynomial.
+\label{prop:comp}
+\end{proposition}
+Proposition~\ref{prop:comp} provides an explicit polynomial measure family to approximate any PQC under the hardware-efficient ansatz. Thus, the gradient variance of an arbitrary PQC can be obtained by the Weingarten calculus of polynomials with respect to the Haar measure. For rigorous proofs of Proposition~\ref{prop:comp} , one can refer to the Supplementary Materials Sec.~\RomanNumeralCaps{3}.
 % -------------------------------------------------------------------------------------------
 % If the rotation gate takes the form $\exp(iP\theta)$, where $\theta \sim \text{Uniform}[0, 2\pi)$ and $P$ is a Pauli word, we demonstrate that the measure of a single rotation gate can be approximated by a polynomial measure $\mu_m^P$, where a larger $m$ yields a more accurate approximation. The Radon-Nikodym derivative of this polynomial measure, which quantifies its deviation from the standard Haar measure, is given by
 % \begin{equation}
@@ -336,7 +485,9 @@ For rigorous approximation statements and proofs of Theorem~\ref{thm:comp} and C
 %         \frac{\dif\nu_m}{\dif\mu_H} = \frac{\dif\mu_m^{P_1}}{\dif\mu_H} * \delta_{W_1} * \cdots *\frac{\dif\mu_m^{P_L}}{\dif\mu_H} * \delta_{W_L}.
 % \end{equation}
 % where $\delta_{W_k}$ is a delta function that $\delta_{W_k}(U) = 0$ when $U \neq W_k$ and $\delta_{W_k}(U) = 1$ when $U= W_k$. For rigorous proofs of the approximation of a single gate and the whole circuit, one can refer to the Supplementary Materials Sec.~\RomanNumeralCaps{2}.
-In the remaining content, we will delve deeper into the analysis of variance on the balanced polynomial measures. Since the analysis for $U_L$ and $U_R$ is analogous, without loss of generality, we focus on the right part $U_R$ in the discussion\cite{NoteDist3}. 
+In the following section, we will delve deeper into the analysis of variance via an exponential-level classification theorem.
+
+% Since the analysis for $U_L$ and $U_R$ is analogous, without loss of generality, we focus on the right part $U_R$ in the discussion\cite{NoteDist3}. 
 
 %\emph{Level classification of variances.}---Universal approximation of arbitrary PQCs by polynomial measures is enough to provide a computational framework for gradient variances, as gradient variances on polynomial measures can be carried out by the Weingarten calculus\cite{collins2003moments,collins2006integration}. When integrating polynomials with respect to the Haar measure, only the balanced components contribute, which allows us to restrict our analysis to balanced polynomial measures. Moreover, the derivatives of these measures admit a further decomposition in terms of zonal polynomials, leading to an exponential-level classification. We begin by reviewing the fundamental properties of zonal polynomials. 
 
@@ -360,10 +511,20 @@ In the remaining content, we will delve deeper into the analysis of variance on 
 % As an application of classical unitary design theory, it is known that ${\rm Var}^{(\mu_L,\mu_R)}_0(\rho, O)\leq C_0(\rho, O)d^{-2}$ for some constant $C_0(\rho, O) > 0$. In the following theorem, we will quantify the first- and second-order variances:
 
 
-\emph{Level classification of variances.}--- The above analysis shows that an arbitrary PQC can be approximated by polynomial probability measures. The balanced component of such measures, which governs the gradient variance, admits a decomposition in terms of zonal polynomials~\cite{james1961zonal,james1964distributions,constantine1963some}. Consequently, the total variance can be expressed as the sum of three contributions:
+\emph{Level classification of variances.}
+The above analysis shows that an arbitrary PQC can be approximated by polynomial probability measures. The balanced component of such measures, which governs the gradient variance, admits a decomposition in terms of zonal polynomials~\cite{james1961zonal,james1964distributions,constantine1963some}. Consequently, the total variance can be expressed as the sum of three contributions:
 \begin{equation}
-    \operatorname{Var}^{(\mu_L, \mu_R)}(\rho, O) = \sum_{i=0}^2 \operatorname{Var}_i^{(\mu_L, \mu_R)}(\rho, O).
+    \operatorname{Var}^{(\mu_L, \mu_R)}(\rho, O) = \sum_{\alpha=0}^2 \operatorname{Var}_\alpha^{(\mu_L, \mu_R)}(\rho, O),
     \label{eq:var_decomp}
+\end{equation}
+where the $\alpha$-th order variance is defined by
+\begin{equation}
+    \begin{aligned}
+        \operatorname{Var}_\alpha^{(\mu_L, \mu_R)}(\rho, O)&:=\sum_{\boldsymbol{\lambda}\in S_
+        \alpha}\int\dif\mu_L(U_L)\dif\mu_R(U_R)\\
+        &\left(\int\dif\mu_H(V)\overline{Z_{\lambda,V}(U)}\operatorname{Tr}[V\rho V^\dagger X_L]^2\right).
+    \end{aligned}
+    \label{eq:nth-var}
 \end{equation}
 %Based on this expansion, we decompose $g := \mathrm{d}\mu_R / \mathrm{d}\mu_H$ as $g = \sum_i g_i$, where $g_i$ denotes the projection of $g$ onto the subspace $\bigoplus_{|{\boldsymbol\lambda}|=0, |{\boldsymbol\lambda}_+|=i} V_{\boldsymbol\lambda}$, where $|{\boldsymbol\lambda}| = \sum_i {\boldsymbol\lambda}_i$, $|{\boldsymbol\lambda}_+|$ denotes the sum of positive entries of ${\boldsymbol\lambda}$ and $V_{\boldsymbol\lambda}$ is the irreducible subspace indexed by ${\boldsymbol\lambda}$. The $i$-th order variance can thus be expressed as
 % \begin{equation}
@@ -372,78 +533,81 @@ In the remaining content, we will delve deeper into the analysis of variance on 
 %         &\int\dif\mu_L(U_L)\dif\mu_H(U) g_i(U) \operatorname{Tr}[U\rho U^\dagger X_L]^2.
 %     \end{aligned}
 % \end{equation}
-Through the zonal polynomial decomposition, we have projected the variance onto several subspaces that admit explicit computation successfully. Among these, the bound $\operatorname{Var}_0 \leq C_0(\rho,O) d^{-2}, C_0(\rho,O)>0$ for the zeroth-order variance is a well-established result. For the first- and second-order variances, we provide the following theoretical upper bounds.
-
-
+Through the zonal polynomial decomposition, we have projected the variance onto several subspaces that admit explicit computation successfully. Among these, the bound $\operatorname{Var}_0 \leq C_0(\rho,O) d^{-2}, C_0(\rho,O)>0$ for the zeroth-order variance is a well-established result~\cite{mcclean2018barren}. For the first- and second-order variances, we provide the following theoretical upper bounds.
 \begin{theorem}
-    Given a balanced probability polynomial measure $\mu_R$, the $\alpha$-th-order variance admits the following asymptotic bounds:
+    Let $U_L$ and $U_R$ be the unitaries obtained from the splitting defined before, with $U_L\sim \mu_L$ and $U_R\sim \mu_R$. Then the $\alpha$-th-order variance admits the following asymptotic bounds:
     \begin{equation}
         {\rm Var}^{(\mu_L,\mu_R)}_\alpha(\rho, O) \leq C_\alpha(\rho, O)d^{\alpha-2}\quad {\rm for}\ \alpha=0,1,2,
     \end{equation}
     where $C_\alpha(\rho, O)$ is a constant independent on $d$.
     \label{thm:1}
 \end{theorem}
-Building on the uniform approximation by polynomial measures, Theorem~\ref{thm:1} characterizes the variance contributions from each orthogonal subspace for general PQCs, which provides a level classification of total variances based on structural properties of measures. It demonstrates that the second-order variance determines whether there exists a barren plateau at the given parameter. Moreover, for a pure state $\rho$, there is a further restriction that
+Building on the uniform approximation by polynomial measures, Theorem~\ref{thm:1} characterizes the variance contributions from orthogonal subspaces $\{\oplus_{\boldsymbol{\lambda}\in S_\alpha} V_\alpha:\alpha = 0, 1,2 \}$ for general PQCs, thereby providing a level classification of total variances based on structural properties of measures. It demonstrates that the second-order variance determines whether there exists a barren plateau at the given parameter. Moreover, for a pure state $\rho$, we can further build a relation between the total variance and the first-order variance by
     \begin{equation}
         {\rm Var}^{(\mu_L,\mu_R)}(\rho, O) \leq \frac{d}{2}{\rm Var}^{(\mu_L,\mu_R)}_1(\rho, O) + \mathcal{O}(d^{-1}),
         \label{eq:upper_bound}
     \end{equation}
-   indicating that a large first-order variance is necessary to avoid degraded trainability.
+indicating that a large first-order variance is necessary to avoid degraded trainability. Readers can refer to the Supplementary Materials Sec.~\RomanNumeralCaps{4} for detailed proofs of Theorem~\ref{thm:1} and Eq.~\eqref{eq:upper_bound}.
 
-From Eq.~\eqref{eq:upper_bound}, we can derive that when at least one of $\mu_L$ or $\mu_R$ forms a unitary 1-design, the total variance is upper-bounded by $d^{-1}$ up to a constant. The following proposition shows the attainability of this bound.
+By Eq.~\eqref{eq:nth-var}, the first-order contribution to the variance vanishes if at least one of $\mu_L$ or $\mu_R$ forms a unitary $1$-design. It then follows from Eq.~\eqref{eq:upper_bound} that the total variance is bounded by $O(d^{-1})$. The following proposition establishes that this bound is tight.
 \begin{proposition}
-   Let $\nu_m$ be a probability measure on the unitary group $ U(d)$ whose derivative satisfies
+   Fix a pure state $\rho$ and an idempotent operator $P$ on $\mathbb{C}^d$ (i.e., $P^2 = I$). For $m \in \mathbb{N}$, define a probability measure $\nu_m$ on $\mathcal{U}(d)$ by
 \begin{equation}
-    \frac{\dif\nu_m}{\dif\mu_H}(U) = c_m\operatorname{Tr}[U\rho U^\dagger P]^{2m},
+    \frac{\dif \nu_m}{\dif \mu_H}(U)
+    = c_m \, \bigl(\operatorname{Tr}[U \rho U^\dagger P]\bigr)^{2m},
     \label{eq:1-design}
 \end{equation}
-where $\rho$ is a pure state, $P$ is an idempotent matrix, and $c_m$ is the normalization constant. Then $\nu_m$ defines a unitary 1-design. Moreover, for sufficiently large $m$, there exists a measure $\mu_L$ and an observable $O$ such that 
-\begin{equation}
-    {\rm Var}^{(\mu_L,\nu_m)}(\rho, O)\geq \gamma d^{-1}
-\end{equation}
-for some constant $\gamma>0$.
+where $c_m > 0$ is the normalization constant. Then the following statements hold:
+\begin{enumerate}
+    \item The measure $\nu_m$ forms a unitary $1$-design.
+    \item Moreover, for sufficiently large $m$, there exist probability measures $\mu_L$ and $\mu_R$ on $\mathcal{U}(d)$, and observables $O_1, O_2$, such that
+    \begin{equation}
+        \mathrm{Var}^{(\mu_L, \nu_m)}(\rho, O_1),\ \mathrm{Var}^{(\nu_m, \mu_R)}(\rho, O_2)\;\geq\; \gamma d^{-1},
+    \end{equation}
+    where $\gamma > 0$ is a constant independent of $d$.
+\end{enumerate}
 \label{prop:1-design}
 \end{proposition}
-This result indicates that when the PQC forms a unitary 1-design, its total gradient variance can be at most on the order of \(d^{-1}\), thereby exhibiting superior trainability compared to unitary 2-designs, which are bounded by the $d^{-2}$ scaling. The proofs of Theorem~\ref{thm:1} and Proposition~\ref{prop:1-design} are provided in Supplementary Material, Sec.~\RomanNumeralCaps{3}.
+This result indicates that when the probability measure of one side of the circuit at a parameter forms a unitary 1-design, its total gradient variance can be at most on the order of \(d^{-1}\), thereby exhibiting superior trainability compared to unitary 2-designs, which are bounded by the $d^{-2}$ scaling. The proofs of Theorem~\ref{thm:1} and Proposition~\ref{prop:1-design} are provided in the Supplementary Material, Sec.~\RomanNumeralCaps{4}.
 
 
 \begin{figure}[htbp]
 \centering
     \centering
-    \includegraphics[width=0.96\linewidth]{figures/bound.pdf}
+    \includegraphics[width=0.9\linewidth]{figures/bound.pdf}
     \caption{The gradient variances of the circuit when adopting unitary 1-designs and unitary 2-designs as functions of the system size $d$. The inset shows the circuit structure used in this example. The long-dashed line represents the upper bound $4d^{-1}$ for unitary 1-designs in this circuit and the colored solid lines correspond to unitary 1-designs with $\mu_R$ taking different $\nu_m$. The gradient variance gradually approaches the upper bound as $m$ increases. In contrast, when the circuit adopts a unitary 2-design, the gradient variance is fixed at $4(d(d+1))^{-1}$ (short-dashed line).}
 \label{fig:main1}
 \end{figure}
 % Furthermore, we demonstrate the attainability of the $d^{-1}$ scaling of gradient variances under the specific unitary 1-design setting. We take $O=P_1/\sqrt{d}$ and $H_\ell=P_2$, where $P_1$ and $P_2$ are two noncommuting Pauli words. For the circuit configuration, let $U_R$ be a unitary 1-design whose derivative takes the form $c_m\operatorname{Tr}[U\rho U^\dagger P]^{2m}$, where $P$ satisfies $[P_1,P_2]=2iP$, while $U_L$ commutes with $O$. Under these conditions, our theoretical result shows that gradient variances scale as $d^{-1}$ when $m$ is sufficiently large, significantly outperforming the $d^{-2}$ scaling of unitary 2-designs, as illustrated in Figure~\ref{fig:main1}.
-Furthermore, we demonstrate the attainability of the $d^{-1}$ scaling of the gradient variance at a given parameter $\theta_\ell$ under a specific unitary 1-design setting. Consider the rotation gate at position $\theta_\ell$ to be $\exp(iP_1\theta_\ell)$ and the observable $O = P_2/\sqrt{d}$, where $P_1$ and $P_2$ are two noncommuting Pauli words and $U_L$ is an operator commuting with $P_2$. When $U_R$ forms a unitary 2-design, the variance ${\rm Var}^{(\mu_L, \mu_R)}(\rho, O)$ can be computed as $4(d(d+1))^{-1}$, as indicated by the short-dashed line in Figure ~\ref{fig:main1}. When $U_R$ is taken as the unitary 1-design satisfying Eq.~(9) with $[P_1, P_2] = 2iP$, the variance ${\rm Var}^{(\mu_L, \mu_R)}(\rho, O)$ is bounded by the $d^{-1}$ scaling and, as $m$ increases (colored solid lines in Figure 2), approaches the upper bound $4d^{-1}$, marked by the long-dashed line.
+Furthermore, we demonstrate the attainability of the $d^{-1}$ scaling of the gradient variance at a given parameter $\theta_\ell$ under a specific unitary 1-design setting. Consider the rotation gate at position $\theta_\ell$ to be $\exp(-iP_1\theta_\ell)$ and the observable $O = P_2/\sqrt{d}$, where $P_1$ and $P_2$ are two noncommuting Pauli words and $U_L$ is an operator commuting with $P_2$. When $\mu_R$ forms a unitary 2-design, the variance ${\rm Var}^{(\mu_L, \mu_R)}(\rho, O)$ can be computed as $4(d(d+1))^{-1}$, as indicated by the short-dashed line in Figure ~\ref{fig:main1}. When $\mu_R$ is taken as the unitary 1-design satisfying Eq.~(9) with $P = [P_1, P_2]/2i$, the variance ${\rm Var}^{(\mu_L, \mu_R)}(\rho, O)$ is bounded by the $d^{-1}$ scaling and, as $m$ increases (colored solid lines in Figure 2), approaches the upper bound $4d^{-1}$, marked by the long-dashed line.
 %Since unitary 1-designs exhibit weaker randomness, they provide a more suitable assumption for modeling trainable PQCs than unitary 2-designs. In Proposition~\ref{prop:1-design}, we construct an explicit family of probability measures that form unitary 1-designs and attain the upper bound on the total variance. This result demonstrates that unitary 1-designs can achieve superior trainability compared to unitary 2-designs. The proofs of Theorem~\ref{thm:1} and Proposition~\ref{prop:1-design} are provided in Supplementary Material, Sec.~\RomanNumeralCaps{3}.
 
-\emph{The Improvement Potential.}--- So far, several methods have been developed to enhance trainability, such as the substitution by shallow circuits, tailored problem-specific ansatz, and optimized initialization strategies~\cite{zhang2024absence,cerezo2021cost, liu2024mitigating, grant2019initialization}. However, these approaches typically rely on global or heuristic modifications and provide limited quantitative guidance within a fixed circuit structure. Here, we propose a formula to characterize the maximal improvement of trainability through inserting oracles adjacent to a given position. Specifically, we insert a parametric oracle $S_p$ associated with the probability measure $\mu$ on the left side of $U_R$. The probability measure for the combination of $U_R$ and $S_p$ is the convolution $\mu * \mu_R$. The schematic diagram of the process is shown in Figure~\ref{fig: circuit}.
+\emph{The Improvement Potential.}
+Beyond characterizing the trainability of a given PQC, it is also of interest to understand how to enhance trainability within a fixed circuit architecture. So far, several methods have been developed to enhance trainability, such as the substitution by shallow circuits, tailored problem-specific ansatz, and optimized initialization strategies~\cite{zhang2024absence,cerezo2021cost, liu2024mitigating, grant2019initialization,skolik2021layerwise,verdon2019learning}. However, these approaches typically rely on global or heuristic modifications and provide limited quantitative guidance within a fixed circuit structure. Here, we propose a formula to characterize the maximum improvement in trainability by inserting parametric oracles at a given position. Specifically, we insert a parametric oracle $S_p$ associated with the probability measure $\mu$ on the right side of $U_R$. The probability measure for the combination of $U_L$ and $S_p$ is the convolution $\mu_L * \mu$. The schematic diagram of the process is shown in Figure~\ref{fig: circuit}.
 
 \begin{figure}[htbp]
 \includegraphics[width=0.9\linewidth]{figures/circuit.pdf}
-\caption{\label{fig: circuit} The process of inserting oracles adjacent to the given position to potentially enhance trainability. Here, $S_p$ denotes an arbitrary unitary oracle associated with probability measure $\mu$ and the improvement potential $k_{\mu_R}$ represents the maximal improvement of the total variance during the process.}
+\caption{\label{fig: circuit} The process of inserting a parametric oracle at a given position to potentially enhance trainability. Here, $S_p$ denotes an arbitrary parametric unitary oracle associated with probability measure $\mu$ and the improvement potential $k(\mu_L,\mu_R)$ represents the maximal improvement of the total variance during the process.}
 \label{fig:insert}
 \end{figure}
 Formally, we consider the following quantity
 \begin{equation}
-    k_{\mu_R} : = \sup_{\mu\in\mathcal{P}( U(d))}\frac{{\rm Var}^{(\mu_L, \mu*\mu_R)}(\rho, O)}{{\rm Var}^{(\mu_L,\mu_R)}(\rho, O)},
+    k(\mu_L,\mu_R) : = \sup_{\mu\in\mathcal{P}(\mathcal{U}(d))}\frac{{\rm Var}^{(\mu_L*\mu, \mu_R)}(\rho, O)}{{\rm Var}^{(\mu_L, \mu_R)}(\rho, O)},
 \end{equation}
-which characterizes the maximal relative enhancement of variance at the parameter $\theta_\ell$ by inserting an oracle. If $k_{\mu_R}=1$, the PQC exhibits no improvement potential at $\theta_\ell$; whereas $k_{\mu_R}>1$ indicates the existence of improvement potential at that parameter. We provide the following criterion to determine whether $k_{\mu_R}>1$ or not:
+which characterizes the maximal relative enhancement of variance at the parameter $\theta_\ell$ by inserting an oracle. If $k(\mu_L,\mu_R)=1$, the PQC exhibits no improvement potential at $\theta_\ell$; whereas $k(\mu_L,\mu_R)>1$ indicates the existence of improvement potential at that parameter. We provide the following cri terion to determine whether $k(\mu_L,\mu_R)>1$ or not:
 \begin{theorem}
-For a PQC at $\theta_\ell$ with the probability measure pair $(\mu_L, \mu_R)$, the improvement potential obtained by inserting an oracle is
+For a PQC at $\theta_\ell$ with the probability measure pair $(\mu_L, \mu_R)$, the improvement potential obtained by inserting a parametric oracle at $\theta_\ell$ is
 \begin{equation}
-    k_{\mu_R}  = \frac{\|g*h\|_\infty}{\|gh\|_1}.
+    k(\mu_L,\mu_R)  = \frac{\|h*g\|_\infty}{\|hg\|_1}.
 \end{equation}
-Here $g$ and $h$ are functions on $U(d)$ defined by
+Here $g$ is the Radon–Nikodym derivative $\dif\mu_L/\dif\mu_H$ and $h$ represents the variance obtained after integrating over the right unitary defined by
 \begin{equation}
-    g(V) = \frac{\dif \mu_R}{\dif \mu_H}(V), h(V) = \int \dif \mu_L(U_L)\,
-    \operatorname{Tr}\!\left[V^\dagger \rho V X_L\right]^2 .
+    h(V) = \int\dif\mu_R(U_R)\operatorname{Tr}[V \rho V^\dagger i[U_R\rho U_R^\dagger, H_\ell]]^2.
 \end{equation}
-The function $g$ denotes the derivative of $\mu_R$ with respect to $\mu_H$, while $h$ represents the variance obtained after integrating over the left unitary. Both functions can be decided by the pair $(\mu_L,\mu_R)$.
+Both functions can be obtained by the pair $(\mu_L,\mu_R)$.
 \label{thm:potential}
 \end{theorem}
-Moreover, we find that the quantity ${\rm Var}^{(\mu_L, \mu_H)}(\rho, O)$ can serve as a reference threshold for determining whether improvement potential exists at a given parameter, where this value corresponds to the unitary 2-design case. For a pair of probability measures $(\mu_L, \mu_R)$, if ${\rm Var}^{(\mu_L, \mu_R)}(\rho, O) < {\rm Var}^{(\mu_L, \mu_H)}(\rho, O)$, then the pair possesses improvement potential. In contrast, for circuits where $\mu_R$ satisfies the unitary 2-design property, the gradient variance satisfies ${\rm Var}^{(\mu_L, \mu_R)}(\rho, O) = {\rm Var}^{(\mu_L, \mu_H)}(\rho, O)$. However, such circuits exhibit no training potential, i.e., $k_{\mu_R} = 1$. Therefore, all parameterized quantum circuits, after being optimized through the process illustrated in Figure~\ref{fig:insert}, can achieve performance at a given parameter position that is no worse than that of unitary 2-design circuits. When $\operatorname{Var}^{(\mu_L, \mu_R)}(\rho, O) \geq \operatorname{Var}^{(\mu_L, \mu_H)}(\rho, O)$, no definitive conclusion can be drawn from this comparison alone. In this regime, the presence or absence of improvement potential must be determined using the criterion established in Theorem~\ref{thm:potential}.More detailed discussions and constructive examples are provided in the Supplementary Material Sec.~\RomanNumeralCaps{4}.
+Moreover, we find that the quantity ${\rm Var}^{(\mu_L, \mu_H)}(\rho, O)$ provides a reference threshold. This threshold can be used to assess whether improvement is possible at a given parameter. For a pair of probability measures $(\mu_L, \mu_R)$, if ${\rm Var}^{(\mu_L, \mu_R)}(\rho, O) < {\rm Var}^{(\mu_H, \mu_R)}(\rho, O)$, then we can prove that the circuit must possess improvement potential at $\theta_\ell$. In contrast, for circuits where $\mu_R$ satisfies the unitary 2-design property, the gradient variance satisfies ${\rm Var}^{(\mu_L, \mu_R)}(\rho, O) = {\rm Var}^{(\mu_H, \mu_R)}(\rho, O)$. In this case, such circuits exhibit no training potential, i.e., $k(\mu_L, \mu_R) = 1$. Therefore, all parameterized quantum circuits, after being optimized through the process illustrated in Figure~\ref{fig:insert}, can achieve performance at a given parameter position that is no worse than that of unitary 2-design circuits. When $\operatorname{Var}^{(\mu_L, \mu_R)}(\rho, O) \geq \operatorname{Var}^{(\mu_H, \mu_R)}(\rho, O)$, no definitive conclusion can be drawn from this comparison alone. In this regime, the presence or absence of improvement potential must be determined using the criterion established in Theorem~\ref{thm:potential}. More detailed discussions and constructive examples are provided in the Supplementary Material Sec.~\RomanNumeralCaps{5}.
 
 %If we define the potential training ability of a parameterized quantum circuit as the optimal training performance achievable through the process illustrated in Figure~\ref{fig: circuit}, then circuits with a unitary 2-design property exhibit the lowest potential training ability among all parameterized quantum circuits. When ${\rm Var}^{(\mu_L, \mu_R)}_\theta(\rho, O) \geq {\rm Var}^{(\mu_L, \mu_H)}_\theta(\rho, O)$, no definitive conclusion can be drawn from this comparison alone. In this regime, the presence or absence of improvement potential must be determined using the criterion established in Theorem~\ref{thm:potential}.
 
@@ -458,54 +622,98 @@ Moreover, we find that the quantity ${\rm Var}^{(\mu_L, \mu_H)}(\rho, O)$ can se
 % \end{proposition}
 % It characterizes the maximal achievable improvement potential under this framework.
 % For details of the above statements, we refer readers to the Supplementary Material Sec.~\RomanNumeralCaps{4}.
+\emph{\label{sec:5} Connection to classical theories and Applications}.
+In the final part of this paper, we present three examples to validate our theory and illustrate potential applications to the characterization of trainability.
+\begin{enumerate}
+    \item[(i)] \textbf{Equivalence with direct integration over parameter distributions.}
+    Computing the gradient variance via integration with zonal polynomials in Proposition~\ref{prop:comp} is equivalent to direct integration over the parameter distribution. As an illustrative example, consider $U_R = \exp(-i P \theta)$, where $P$ is a Pauli word and $\theta$ satisfies the uniform distribution on $[0,2\pi)$. Then both the integral in Eq.~\eqref{eq:single} and the direct integration over $\theta$ yield the same gradient variance: $\frac{1}{4}\sum_{k=1}^4 \operatorname{Tr}\!\left[P^k \rho P^k X_L\right]^2$.
+    This agreement validates the correctness of our framework.
 
-\emph{\label{sec:5} Numerical Simulation.}---To validate our theory, we perform numerical simulations using Monte Carlo methods for circuits satisfying the unitary 1-design condition, computing the total gradient variance at the parameter $\theta_\ell$, and compare the results with the theoretical predictions given by our polynomial method. The simulated circuit structure is illustrated in Figure~\ref{fig:num}a, where $U_R$ is a universal block constructed following the approach in \cite{tilma2002parametrization, tilma2002generalized}, with its measure derivative satisfying Eq.~\eqref{eq:1-design}. The left unitary $U_L = \exp(iP'\beta)$ is an arbitrary rotation gate, where $P'$ denotes a Pauli word. 
+    \item[(ii)] \textbf{Approximation of classical unitary design theory.}
+    Any probability measure $\mu$ that forms a unitary $2$-design can be approximated by a sequence of polynomial probability measures of the form
+    \begin{equation}
+        \left\{
+        \nu \;:\;
+        \frac{\dif \nu}{\dif \mu_H}
+        =
+        1 + \sum_{|\lambda_+| > 2} \sum_{V_\lambda}
+        a_{\lambda, V_\lambda} \, Z_{\lambda, V_\lambda}
+        \right\},
+    \end{equation}
+    where the coefficients $a_{\lambda, V_\lambda}$ are chosen to ensure positivity and normalization.
 
+    \item[(iii)] \textbf{A practical criterion for trainability.}
+    By Eq.~\ref{eq:upper_bound}, if the scalar
+    \[
+        d \cdot \mathrm{Var}_1^{(\mu_L,\mu_R)}(\rho, O)
+    \]
+    decays faster than any polynomial in $\log_2(d)$, then a barren plateau occurs. Under the common assumption that all parameters are i.i.d. and uniformly distributed on $[0, 2\pi)$, one has
+    \begin{equation}
+        d \cdot \mathrm{Var}_1^{(\mu_L,\mu_R)}(\rho, O)
+        \;\approx\;
+        2\,\operatorname{Tr}\!\left[U \rho^2 U^\dagger X_L^2\right].
+    \end{equation}
+   This quantity can be efficiently estimated by replacing each rotation gate $\exp(-i P_j \theta_j)$ with a uniformly random choice from the set $\{P_j^1, P_j^2, P_j^3, P_j^4\}$, while keeping the entangling gates unchanged. Similar circuit constructions can be found in Ref.~\cite{arute2019quantum}.
+\end{enumerate}
+% \emph{\label{sec:5} Numerical Simulation.}---To validate our theory, we perform numerical simulations using Monte Carlo methods for circuits satisfying the unitary 1-design condition, computing the total gradient variance at the parameter $\theta_\ell$, and compare the results with the theoretical predictions given by our polynomial method. The simulated circuit structure is illustrated in Figure~\ref{fig:num}a, where $U_R$ is a universal block constructed following the approach in \cite{tilma2002parametrization, tilma2002generalized}, with its measure derivative satisfying Eq.~\eqref{eq:1-design}. The left unitary $U_L = \exp(-iP'\beta)$ is an arbitrary rotation gate, where $P'$ denotes a Pauli word. 
+
+% % \begin{figure}[htbp]
+% %     \begin{subfigure}[b]{\linewidth}
+% %         \caption{\label{fig:sub1}}
+% %         \includegraphics[width=0.96\linewidth]{cir_str_c.pdf}
+% %     \end{subfigure}
+% %     \begin{subfigure}{0.48\linewidth}
+% %     \caption{\label{fig:sub2}}
+% %     \centering
+% %     \includegraphics[width=\linewidth]{unitary_1_design_example_3bits_1.pdf}
+% % \end{subfigure}
+% % \hfill
+% % \begin{subfigure}{0.48\linewidth}
+% %     \caption{}
+% %     \centering
+% %     \includegraphics[width=\linewidth]{unitary_1_design_example_3bits_3.pdf}
+% %     \label{fig:sub3}
+% % \end{subfigure}
+% %     \caption{\label{fig:cir} Simulation setup and validation results. (a) The quantum circuit used in simulations. Here, $G_k$ and $D_k$ represent rotation gates of different structures and the gradient variance is evaluated at $D_{d-1}$. See Supplemental Material Sec.~\RomanNumeralCaps{5} for detailed parameter configurations. (b), (c) The correlation of theoretical predictions of gradient variance obtained from our method and Monte Carlo estimates on a three-qubit system with the observable $O = Z\otimes I\otimes Z$ and the initial pure state $\rho = \left|0\right>\left<0\right|$. Each point corresponds to a different value of the polynomial degree $2m$ and the dashed line is $y=x$, which indicates perfect agreement. In (b), $P = X\otimes Z\otimes Z$. In (c), $P = Z\otimes Z\otimes Z$.}
+% % \end{figure}
 % \begin{figure}[htbp]
-%     \begin{subfigure}[b]{\linewidth}
-%         \caption{\label{fig:sub1}}
-%         \includegraphics[width=0.96\linewidth]{cir_str_c.pdf}
-%     \end{subfigure}
-%     \begin{subfigure}{0.48\linewidth}
-%     \caption{\label{fig:sub2}}
 %     \centering
-%     \includegraphics[width=\linewidth]{unitary_1_design_example_3bits_1.pdf}
-% \end{subfigure}
-% \hfill
-% \begin{subfigure}{0.48\linewidth}
-%     \caption{}
-%     \centering
-%     \includegraphics[width=\linewidth]{unitary_1_design_example_3bits_3.pdf}
-%     \label{fig:sub3}
-% \end{subfigure}
-%     \caption{\label{fig:cir} Simulation setup and validation results. (a) The quantum circuit used in simulations. Here, $G_k$ and $D_k$ represent rotation gates of different structures and the gradient variance is evaluated at $D_{d-1}$. See Supplemental Material Sec.~\RomanNumeralCaps{5} for detailed parameter configurations. (b), (c) The correlation of theoretical predictions of gradient variance obtained from our method and Monte Carlo estimates on a three-qubit system with the observable $O = Z\otimes I\otimes Z$ and the initial pure state $\rho = \left|0\right>\left<0\right|$. Each point corresponds to a different value of the polynomial degree $2m$ and the dashed line is $y=x$, which indicates perfect agreement. In (b), $P = X\otimes Z\otimes Z$. In (c), $P = Z\otimes Z\otimes Z$.}
+%     \includegraphics[width=0.96\linewidth]{cir&num.pdf}
+%     \caption{\label{fig:num} Simulation setup and validation results. (a) The quantum circuit used in simulations. Here, $G_k$ and $D_k$ represent rotation gates of different structures and the gradient variance is evaluated at $D_{d-1}$. See Supplemental Material Sec.~\RomanNumeralCaps{5} for detailed parameter configurations. (b), (c) The correlation of theoretical predictions of gradient variance obtained from our method and Monte Carlo estimates on a three-qubit system with the observable $O = Z\otimes I\otimes Z$ and the initial pure state $\rho = \left|0\right>\left<0\right|$. Each point corresponds to a different value of the polynomial degree $2m$ and the dashed line is $y=x$, which indicates perfect agreement. In (b), $P = X\otimes Z\otimes Z$. In (c), $P = Z\otimes Z\otimes Z$.}
 % \end{figure}
-\begin{figure}[htbp]
-    \centering
-    \includegraphics[width=0.96\linewidth]{figures/cir&num.pdf}
-    \caption{\label{fig:num} Simulation setup and validation results. (a) The quantum circuit used in simulations. Here, $G_k$ and $D_k$ represent rotation gates of different structures and the gradient variance is evaluated at $D_{d-1}$. See Supplemental Material Sec.~\RomanNumeralCaps{5} for detailed parameter configurations. (b), (c) The correlation of theoretical predictions of gradient variance obtained from our method and Monte Carlo estimates on a three-qubit system with the observable $O = Z\otimes I\otimes Z$ and the initial pure state $\rho = \left|0\right>\left<0\right|$. Each point corresponds to a different value of the polynomial degree $2m$ and the dashed line is $y=x$, which indicates perfect agreement. In (b), $P = X\otimes Z\otimes Z$. In (c), $P = Z\otimes Z\otimes Z$.}
-\end{figure}
 
-% \begin{figure*}[htbp]
-%     \begin{subfigure}[htbp]{0.48\textwidth}
-%         \caption{\label{fig:main_3bits}}
-%         \includegraphics[width=0.8\linewidth]{unitary_1_design_example_3bits.pdf}
-%     \end{subfigure}
-%     \begin{subfigure}[htbp]{0.48\textwidth}
-%         \caption{\label{fig:main_bound}}
-%         \includegraphics[width=0.8\linewidth]{bound.pdf}
-%     \end{subfigure}
-%     \caption{(a) Variances of the gradient at the fixed parameter on a three-qubit system with the observable $O = Z\otimes I\otimes Z$ and the initial pure state $\rho = \left|0\right>\left<0\right|$. Different choices of Pauli words for the left unitaries are indicated in the legend. (b)Variance of the gradient approaching the $d^{-1}$ scaling as $m$ increases; see \emph{Numerical Simulation} for details of the setting. }
-% \end{figure*}
-Although our theory applies to circuits of arbitrary size, numerical verification is restricted to the three-qubit case due to the computational complexity of Monte Carlo methods. 
-Figures~\ref{fig:num}b and~\ref{fig:num}c show correlation plots of a series of the theoretical gradient variances $\operatorname{Var}^{(\mu_L,\nu_m)}(\rho, O)$ and the Monte Carlo estimates $\overline{\operatorname{Var}}^{(\mu_L,\nu_m)}(\rho, O)$, both obtained by varying the balanced polynomial degree $2m$ of $\nu_m$ for two different choices of $U_L$.
-%Figures~\ref{fig:sub2} and~\ref{fig:sub3} show correlation plots between the theoretical gradient variances $\operatorname{Var}_\theta^{(\mu_L,\mu_R^m)}(\rho,O)$ and the Monte Carlo estimates $\overline{\operatorname{Var}}_\theta^{(\mu_L,\mu_R^m)}(\rho,O)$ for two different choices of $U_L$ ($P=XXZ$ and $P=ZZZ$), obtained by varying the balanced polynomial degree $2m$ of $\mu_R^m$. 
-The theoretical values are computed using our polynomial method, while the estimates are obtained via Monte Carlo simulation. In both cases, the data points cluster tightly around the line $y=x$, and the differences between the theoretical values and the estimates are within one standard deviation, showing excellent agreement.
+% % \begin{figure*}[htbp]
+% %     \begin{subfigure}[htbp]{0.48\textwidth}
+% %         \caption{\label{fig:main_3bits}}
+% %         \includegraphics[width=0.8\linewidth]{unitary_1_design_example_3bits.pdf}
+% %     \end{subfigure}
+% %     \begin{subfigure}[htbp]{0.48\textwidth}
+% %         \caption{\label{fig:main_bound}}
+% %         \includegraphics[width=0.8\linewidth]{bound.pdf}
+% %     \end{subfigure}
+% %     \caption{(a) Variances of the gradient at the fixed parameter on a three-qubit system with the observable $O = Z\otimes I\otimes Z$ and the initial pure state $\rho = \left|0\right>\left<0\right|$. Different choices of Pauli words for the left unitaries are indicated in the legend. (b)Variance of the gradient approaching the $d^{-1}$ scaling as $m$ increases; see \emph{Numerical Simulation} for details of the setting. }
+% % \end{figure*}
+% Although our theory applies to circuits of arbitrary size, numerical verification is restricted to the three-qubit case due to the computational complexity of Monte Carlo methods. 
+% Figures~\ref{fig:num}b and~\ref{fig:num}c show correlation plots of a series of the theoretical gradient variances $\operatorname{Var}^{(\mu_L,\nu_m)}(\rho, O)$ and the Monte Carlo estimates $\overline{\operatorname{Var}}^{(\mu_L,\nu_m)}(\rho, O)$, both obtained by varying the balanced polynomial degree $2m$ of $\nu_m$ for two different choices of $U_L$.
+% %Figures~\ref{fig:sub2} and~\ref{fig:sub3} show correlation plots between the theoretical gradient variances $\operatorname{Var}_\theta^{(\mu_L,\mu_R^m)}(\rho,O)$ and the Monte Carlo estimates $\overline{\operatorname{Var}}_\theta^{(\mu_L,\mu_R^m)}(\rho,O)$ for two different choices of $U_L$ ($P=XXZ$ and $P=ZZZ$), obtained by varying the balanced polynomial degree $2m$ of $\mu_R^m$. 
+% The theoretical values are computed using our polynomial method, while the estimates are obtained via Monte Carlo simulation. In both cases, the data points cluster tightly around the line $y=x$, and the differences between the theoretical values and the estimates are within one standard deviation, showing excellent agreement.
 
 
 
 %However, the practical implementation of numerical simulations becomes increasingly challenging as $n$ grows, due to the exponential increase in the number of Monte Carlo samples required for convergence. For instance, $10^8$ samples were used for the two-qubit case, whereas more than $10^{12}$ samples would be required to achieve the same precision for three qubits. For larger $n$, the number of samples necessary to maintain precision becomes enormous. In contrast, our theoretical results remain valid and accurate for all values of $m$, which are currently beyond the reach of numerical simulations.
 
-Trainability plays a central role in the optimization of PQCs, as it determines whether circuit parameters can be efficiently updated. In this Letter, we introduce a measure-theoretic framework based on balanced polynomial measures to characterize the trainability of PQCs. We show that balanced polynomial measures can approximate any PQC with arbitrary precision up to a global factor. Within this framework, we propose a level classification of trainability based on zonal polynomial decomposition. As an application, we rigorously demonstrate that unitary 1-designs can exhibit superior trainability compared to unitary 2-designs. These theoretical findings are further supported by numerical simulations. Furthermore, we introduce the concept of improvement potential and identify a reference threshold for determining whether the trainability of a circuit possesses such potential, and present illustrative examples for different scenarios. Our work reveal internal factors that govern trainability and provide guiding principles for designing more trainable PQCs. Future research may benefit from the decomposition of the space that circuits occupy using dynamic Lie algebras~\cite{diaz2023showcasing, ragone2024lie}, which could provide a more practical and structurally informed framework for achieving more precise approximations.
+%\emph{Conclusion and discussion}.---Trainability plays a central role in the optimization of PQCs, as it determines whether circuit parameters can be efficiently updated. In this Letter, we introduced a measure-theoretic framework based on balanced polynomial measures to characterize the trainability of PQCs and proposed a level classification via zonal polynomial decomposition. This framework connects naturally to classical methods for computing gradient variance and provides guidance for practical circuit design.
+
+\emph{Conclusion and discussion}.
+Trainability is a key metric for evaluating the performance of VQAs, as it determines whether the circuit parameters of the underlying PQCs can be efficiently updated to a desirable solution. In this Letter, we developed a measure-theoretic framework based on balanced polynomial measures to characterize the trainability of arbitrary PQCs. Through zonal polynomial decomposition, this framework yields explicit expressions for the gradient variance and proposes a level classification system for trainability. Our work breaks through the strong randomness assumptions of the existing unitary design framework, enabling the trainability analysis of highly structured, practically meaningful PQCs and thereby paving the way for circuit design on near-term quantum hardware.
+
+Looking ahead, it would be interesting to relate this framework to the decomposition of circuit-accessible spaces via dynamic Lie algebras~\cite{diaz2023showcasing,fontana2024characterizing,ragone2024lie}, thereby developing a more physics-informed perspective. In addition, the framework is well-suited to the study of circuits with symmetries~\cite{lee2018generalized,schatzki2024theoretical,marvian2024theory}, which we leave for future work. Finally, our approach can be extended to other ansatz, such as the unitary coupled cluster ansatz~\cite{taube2006new,filip2020stochastic,anand2022quantum} and the Hamiltonian variational ansatz~\cite{wecker2015progress,wiersema2020exploring}.
+
+\emph{Acknowledgments}.---
+    The authors gratefully acknowledge the support of the National Science and Technology Major Project (Grant Nos.\ 2024ZD0302000, 2021ZD0303205, 2024ZD0300400), the National Natural Science Foundation of China (Grant Nos.\ 92165108, 12261160569, 12441502) and the Guangdong Provincial Quantum Science Strategic Initiative (GDZX2505001).
+    % . The authors also gratefully acknowledge the support of the Innovation Program for Quantum Science and Technology (), and the Guangdong Provincial Quantum Science Strategic Initiative (GDZX2505001).
+% As an application, we rigorously demonstrate that unitary 1-designs can exhibit superior trainability compared to unitary 2-designs. These theoretical findings are further supported by numerical simulations. Furthermore, we introduce the concept of improvement potential and identify a reference threshold for determining whether the trainability of a circuit possesses such potential, and present illustrative examples for different scenarios. Our work reveal internal factors that govern trainability and provide guiding principles for designing more trainable PQCs. Future research may benefit from the decomposition of the space that circuits occupy using dynamic Lie algebras~\cite{diaz2023showcasing, ragone2024lie}, which could provide a more practical and structurally informed framework for achieving more precise approximations.
+
+\bibliographystyle{apsrev4-2}
 \bibliography{ms}% Produces the bibliography via BibTeX.
 \end{document}
